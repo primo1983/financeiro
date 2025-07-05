@@ -9,63 +9,41 @@
 <div class="card shadow-sm mb-4">
     <div class="card-header"><i class="bi bi-funnel-fill me-2"></i>Filtros</div>
     <div class="card-body">
-        <form id="filterForm" method="GET" action=""> <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label for="ano" class="form-label">Ano</label>
-                    <select name="ano" id="ano" class="form-select">
-                        {% for i in range(2023, 2031) %}
-                            <option value="{{ i }}" {% if i == ano_selecionado %}selected{% endif %}>{{ i }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="mes" class="form-label">Mês</label>
-                    <select name="mes" id="mes" class="form-select">
-                        <option value="0" {% if not mes_selecionado or mes_selecionado == 0 %}selected{% endif %}>Ano Inteiro</option>
-                        {% for i in range(1, 13) %}
-                            <option value="{{ i }}" {% if i == mes_selecionado %}selected{% endif %}>{{ i }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-6 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-2"></i>Filtrar Período</button>
-                </div>
+        <form id="filterForm" method="GET" action="">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3"><label for="ano" class="form-label">Ano</label><select name="ano" id="ano" class="form-select">{% for i in range(2023, 2031) %}<option value="{{ i }}" {% if i == ano_selecionado %}selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
+                <div class="col-md-3"><label for="mes" class="form-label">Mês</label><select name="mes" id="mes" class="form-select"><option value="0" {% if mes_selecionado == 0 %}selected{% endif %}>Ano Inteiro</option>{% for i in range(1, 13) %}<option value="{{ i }}" {% if i == mes_selecionado %}selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
+                <div class="col-md-6 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-2"></i>Filtrar Período</button></div>
             </div>
         </form>
     </div>
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-success">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Receitas no Período</h6>
-                <h4 class="card-title">{{ total_receitas|currency }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-danger">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Despesas no Período</h6>
-                <h4 class="card-title">{{ total_despesas|currency }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-primary">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Saldo do Período</h6>
-                <h4 class="card-title">{{ saldo_periodo|currency }}</h4>
-            </div>
-        </div>
-    </div>
+    <div class="col-md-4"><div class="card text-white bg-success"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Receitas no Período</h6><h4 class="card-title">{{ total_receitas|currency }}</h4></div></div></div>
+    <div class="col-md-4"><div class="card text-white bg-danger"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Despesas no Período</h6><h4 class="card-title">{{ total_despesas|currency }}</h4></div></div></div>
+    <div class="col-md-4"><div class="card text-white bg-primary"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Saldo do Período</h6><h4 class="card-title">{{ saldo_periodo|currency }}</h4></div></div></div>
 </div>
 
-<div class="text-center p-5 border rounded bg-body-tertiary">
-    <i class="bi bi-graph-up-arrow fs-1 text-muted"></i>
-    <h4 class="mt-3">Gráficos</h4>
-    <p class="text-muted">A base de filtros e resumos está pronta. Os gráficos para o período selecionado aparecerão aqui na próxima etapa.</p>
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Despesas por Categoria</div>
+            <div class="card-body">
+                <canvas id="graficoDespesas"></canvas>
+                {% if not grafico_despesas_valores %}<p class="text-center text-muted mt-3">Nenhuma despesa para exibir no período.</p>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Receitas por Categoria</div>
+            <div class="card-body">
+                <canvas id="graficoReceitas"></canvas>
+                 {% if not grafico_receitas_valores %}<p class="text-center text-muted mt-3">Nenhuma receita para exibir no período.</p>{% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -80,20 +58,37 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             const ano = document.getElementById('ano').value;
             const mes = document.getElementById('mes').value;
-            
-            // Constrói a URL base e os parâmetros
-            const baseUrl = `/analises/${ano}/${mes}`;
-            const formData = new FormData(filterForm);
-            const params = new URLSearchParams();
+            window.location.href = `/analises/${ano}/${mes}`;
+        });
+    }
 
-            // Adiciona apenas os filtros que não fazem parte da URL base
-            for (const pair of formData.entries()) {
-                if (pair[0] !== 'ano' && pair[0] !== 'mes') {
-                    params.append(pair[0], pair[1]);
-                }
-            }
-            const queryString = params.toString();
-            window.location.href = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+    const chartColors = ['#0d6efd', '#6f42c1', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#d63384', '#fd7e14', '#20c997', '#6c757d'];
+
+    // GRÁFICO DE PIZZA - DESPESAS
+    const despesasPieCanvas = document.getElementById('graficoDespesas');
+    const despesasValores = {{ grafico_despesas_valores|tojson }};
+    if (despesasPieCanvas && despesasValores.length > 0) {
+        new Chart(despesasPieCanvas.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: {{ grafico_despesas_labels|tojson }},
+                datasets: [{ data: despesasValores, backgroundColor: chartColors }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+    
+    // GRÁFICO DE PIZZA - RECEITAS
+    const receitasPieCanvas = document.getElementById('graficoReceitas');
+    const receitasValores = {{ grafico_receitas_valores|tojson }};
+    if (receitasPieCanvas && receitasValores.length > 0) {
+        new Chart(receitasPieCanvas.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: {{ grafico_receitas_labels|tojson }},
+                datasets: [{ data: receitasValores, backgroundColor: chartColors }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
     }
 });
