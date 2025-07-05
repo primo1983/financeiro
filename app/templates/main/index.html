@@ -1,18 +1,123 @@
 {% extends 'layout_app.html' %}
 {% block title %}Dashboard{% endblock %}
+
 {% block content %}
 <div class="row g-4">
-    </div>
-<div class="row mt-4">
-    <div class="col-12">
+    <div class="col-lg-7">
+        <div class="d-grid mb-4">
+            <button type="button" id="openAddModalBtn" class="btn btn-primary btn-lg py-3">
+                <i class="bi bi-plus-circle-fill me-2"></i> Adicionar Nova Transação
+            </button>
+        </div>
         <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-list-ol me-2"></i>Últimas Transações</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <div class="list-group-item d-none d-md-flex">
+                    <div class="row w-100 align-items-center">
+                        <div class="col-md-6"><small class="text-muted fw-bold">DESCRIÇÃO</small></div>
+                        <div class="col-md-3 text-center"><small class="text-muted fw-bold">DATA</small></div>
+                        <div class="col-md-3 text-end"><small class="text-muted fw-bold">VALOR</small></div>
+                    </div>
+                </div>
+                {% for transacao in ultimas_10_transacoes %}
+                <div class="list-group-item">
+                    <div class="row w-100 align-items-center">
+                        <div class="col-12 col-md-6">
+                            <div class="fw-bold">{{ transacao.descricao }}</div>
+                            <small class="text-muted d-md-none">{{ transacao.data.strftime('%d/%m/%Y') }}</small>
+                        </div>
+                        <div class="col-md-3 text-center d-none d-md-block">
+                            <span class="text-muted">{{ transacao.data.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <span class="fw-bold fs-6 {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="list-group-item text-center text-muted p-4">Nenhuma transação encontrada.</div>
+                {% endfor %}
+            </div>
+             <div class="card-footer text-center bg-body-tertiary">
+                <a href="{{ url_for('main.transacoes_redirect') }}">Ver todas as transações <i class="bi bi-arrow-right-short"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card text-white bg-primary shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div><h6 class="card-subtitle mb-1">Saldo Atual (Total)</h6><h4 id="saldo-atual-valor" class="fw-bold mb-0">{% if mostrar_saldos %}{{ saldo_atual|currency }}{% else %}R$ ••••••{% endif %}</h4></div>
+                            <button id="toggle-saldo-btn" class="btn btn-sm btn-link text-white p-0" title="Alternar visibilidade do saldo"><i class="bi {% if mostrar_saldos %}bi-eye-slash{% else %}bi-eye{% endif %} fs-5"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Saldo do Mês</h6>
+                        <h4 class="fw-bold mb-0">{{ saldo_mes|currency }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 mb-4">
+                <div class="card text-white bg-success shadow-sm h-100">
+                     <div class="card-body">
+                        <h6 class="card-subtitle mb-2">Receita do Mês</h6>
+                        <h4 class="fw-bold mb-0">{{ receita_mes|currency }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                 <div class="card text-white bg-danger shadow-sm">
+                     <div class="card-body">
+                        <h6 class="card-subtitle mb-2">Despesa do Mês</h6>
+                        <h4 class="fw-bold mb-0">{{ despesa_mes|currency }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mt-4">
             <div class="card-header"><i class="bi bi-bar-chart-line-fill me-2"></i>Receitas vs. Despesas (Últimos 3 Meses)</div>
             <div class="card-body"><canvas id="barChart" style="min-height: 250px;"></canvas></div>
-            <div class="card-footer text-center bg-body-tertiary">
-                <a href="{{ url_for('main.analises_redirect') }}">Ver mais análises <i class="bi bi-arrow-right-short"></i></a>
-            </div>
         </div>
     </div>
 </div>
 {% include 'includes/modal_transacao.html' %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('toggle-saldo-btn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            fetch("{{ url_for('main.toggle_saldo_visibility') }}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
+            .then(response => { if (response.ok) { window.location.reload(); } else { alert('Ocorreu um erro.'); } });
+        });
+    }
+    
+    const barCanvas = document.getElementById('barChart');
+    if(barCanvas) {
+        new Chart(barCanvas.getContext('2d'), { 
+            type: 'bar', 
+            data: { labels: {{ bar_chart_labels|tojson }}, datasets: [ 
+                { label: 'Receitas', data: {{ bar_chart_receitas|tojson }}, backgroundColor: 'rgba(25, 135, 84, 0.7)' }, 
+                { label: 'Despesas', data: {{ bar_chart_despesas|tojson }}, backgroundColor: 'rgba(220, 53, 69, 0.7)' } 
+            ] }, 
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } } 
+        });
+    }
+});
+</script>
+{% include 'includes/scripts_modal_transacao.html' %}
 {% endblock %}
