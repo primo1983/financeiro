@@ -59,7 +59,10 @@
                         {{ form.tipo(class="form-select") }}
                     </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary", value="Salvar") }}</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
             </form>
         </div>
     </div>
@@ -82,7 +85,10 @@
                         {{ form.tipo(class="form-select", id="edit-tipo") }}
                     </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary", value="Salvar Alterações") }}</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
             </form>
         </div>
     </div>
@@ -109,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const handleAjaxFormSubmit = (formId) => {
+    const configureAjaxForm = (formId) => {
         const form = document.getElementById(formId);
         if (!form) return;
         form.addEventListener('submit', function(e) {
@@ -117,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const formData = new FormData(form);
             const actionUrl = form.getAttribute('action');
             const csrfToken = form.querySelector('[name="csrf_token"]').value;
+
             fetch(actionUrl, {
                 method: 'POST', body: formData,
                 headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }
@@ -124,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json().then(data => ({ ok: response.ok, body: data })))
             .then(({ ok, body }) => {
                 form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                
                 if (ok && body.success) {
                     window.location.href = body.redirect_url;
                 } else {
@@ -135,10 +143,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }).catch(error => console.error('Erro:', error));
         });
     };
-
-    // CORREÇÃO: Chamando a função com o nome correto
-    handleAjaxFormSubmit('addCategoryForm');
-    handleAjaxFormSubmit('editCategoryForm');
+    
+    configureAjaxForm('addCategoryForm');
+    configureAjaxForm('editCategoryForm');
 });
 </script>
 {% endblock %}

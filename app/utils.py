@@ -24,7 +24,13 @@ def expandir_transacoes_na_janela(regras, data_inicio_janela, data_fim_janela):
         data_regra = t.data
         if not t.recorrencia:
             if data_inicio_janela <= data_regra <= data_fim_janela:
-                t_dict = { 'id': t.id, 'descricao': t.descricao, 'valor': float(t.valor), 'data': t.data, 'tipo': t.tipo, 'categoria_id': t.categoria_id, 'forma_pagamento': t.forma_pagamento, 'recorrencia': t.recorrencia, 'data_final_recorrencia': t.data_final_recorrencia, 'is_rule': True, 'categoria_nome': t.categoria.nome if t.categoria else 'Sem Categoria', 'is_skipped': False }
+                t_dict = {
+                    'id': t.id, 'descricao': t.descricao, 'valor': float(t.valor), 'data': t.data,
+                    'tipo': t.tipo, 'categoria_id': t.categoria_id, 'forma_pagamento': t.forma_pagamento,
+                    'recorrencia': t.recorrencia, 'data_final_recorrencia': t.data_final_recorrencia,
+                    'is_rule': True, 'categoria_nome': t.categoria.nome if t.categoria else 'Sem Categoria',
+                    'is_skipped': False
+                }
                 transacoes_na_janela.append(t_dict)
             continue
         
@@ -36,7 +42,14 @@ def expandir_transacoes_na_janela(regras, data_inicio_janela, data_fim_janela):
             if data_corrente > data_fim_janela: break
             if data_corrente >= data_inicio_janela:
                 is_exception = (t.id, data_corrente) in excecoes_set
-                nova_transacao = { 'id': t.id, 'descricao': t.descricao, 'valor': float(t.valor), 'data': data_corrente, 'tipo': t.tipo, 'categoria_id': t.categoria_id, 'forma_pagamento': t.forma_pagamento, 'recorrencia': t.recorrencia, 'data_final_recorrencia': t.data_final_recorrencia, 'is_rule': (data_corrente == data_regra), 'categoria_nome': t.categoria.nome if t.categoria else 'Sem Categoria', 'is_skipped': is_exception }
+                nova_transacao = {
+                    'id': t.id, 'descricao': t.descricao, 'valor': float(t.valor), 'data': data_corrente,
+                    'tipo': t.tipo, 'categoria_id': t.categoria_id, 'forma_pagamento': t.forma_pagamento,
+                    'recorrencia': t.recorrencia, 'data_final_recorrencia': t.data_final_recorrencia,
+                    'is_rule': (data_corrente == data_regra),
+                    'categoria_nome': t.categoria.nome if t.categoria else 'Sem Categoria',
+                    'is_skipped': is_exception
+                }
                 transacoes_na_janela.append(nova_transacao)
             if data_corrente < data_regra: data_corrente = data_regra
             if t.recorrencia == 'Quinzenal': data_corrente += relativedelta(days=14)
@@ -44,14 +57,27 @@ def expandir_transacoes_na_janela(regras, data_inicio_janela, data_fim_janela):
             elif t.recorrencia == 'Anual': data_corrente += relativedelta(years=1)
             else: break
             if t.data_final_recorrencia and data_corrente > data_final_regra: break
+            
     return transacoes_na_janela
 
+# --- FUNÇÃO DE CÁLCULO CORRIGIDA ---
 def calcular_resumo_financeiro(lista_transacoes):
+    """Recebe uma lista de transações e retorna um dicionário com os totais, ignorando as puladas."""
     transacoes_validas = [t for t in lista_transacoes if not t.get('is_skipped')]
+    
     total_receitas = sum(t['valor'] for t in transacoes_validas if t['tipo'] == 'Receita')
     total_despesas = sum(t['valor'] for t in transacoes_validas if t['tipo'] == 'Despesa')
-    receitas_por_cat = {t['categoria_nome']: receitas_por_cat.get(t['categoria_nome'], 0) + t['valor'] for t in transacoes_validas if t['tipo'] == 'Receita'}
-    despesas_por_cat = {t['categoria_nome']: despesas_por_cat.get(t['categoria_nome'], 0) + t['valor'] for t in transacoes_validas if t['tipo'] == 'Despesa'}
+    
+    # CORREÇÃO: Inicializa os dicionários antes do loop para garantir que sempre existam.
+    receitas_por_cat = {}
+    despesas_por_cat = {}
+
+    for t in transacoes_validas:
+        cat_nome = t['categoria_nome']
+        if t['tipo'] == 'Receita':
+            receitas_por_cat[cat_nome] = receitas_por_cat.get(cat_nome, 0) + t['valor']
+        else:
+            despesas_por_cat[cat_nome] = despesas_por_cat.get(cat_nome, 0) + t['valor']
 
     return {
         "total_receitas": total_receitas,
