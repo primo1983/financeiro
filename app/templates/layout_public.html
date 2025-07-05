@@ -1,17 +1,15 @@
 {% extends 'base.html' %}
 
+{% block styles %}
+<style>
+    .login-body { background: linear-gradient(135deg, #0d6efd, #052c65); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .main-content-container { background-color: transparent !important; padding: 0 !important; }
+</style>
+{% endblock %}
+
 {% block body_content %}
 <body class="login-body">
     <main class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    {% if category == 'danger' %}
-                    <div class="alert alert-danger py-2" role="alert">{{ message }}</div>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
         <div class="main-content-container">
             {% block content %}{% endblock %}
         </div>
