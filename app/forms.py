@@ -10,6 +10,7 @@ class LoginForm(FlaskForm):
 
 class PerfilForm(FlaskForm):
     email = StringField('E-mail', validators=[DataRequired("O e-mail é obrigatório."), Email("E-mail inválido.")])
+    theme = RadioField('Tema', choices=[('auto', 'Sistema'), ('light', 'Claro'), ('dark', 'Escuro')], default='auto')
     senha_atual = PasswordField('Senha Atual', validators=[DataRequired("Senha atual é obrigatória.")])
     nova_senha = PasswordField('Nova Senha', validators=[Optional(), Length(min=6, message="A nova senha deve ter pelo menos 6 caracteres.")])
     confirmar_senha = PasswordField('Confirmar Nova Senha', validators=[EqualTo('nova_senha', message='As senhas não correspondem.')])

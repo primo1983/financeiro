@@ -59,10 +59,7 @@
                         {{ form.tipo(class="form-select") }}
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    {{ form.submit(class="btn btn-primary") }}
-                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary") }}</div>
             </form>
         </div>
     </div>
@@ -85,10 +82,7 @@
                         {{ form.tipo(class="form-select", id="edit-tipo") }}
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    {{ form.submit(class="btn btn-primary") }}
-                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary", value="Salvar Alterações") }}</div>
             </form>
         </div>
     </div>
@@ -115,9 +109,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const configureAjaxForm = (formId) => {
+    const handleAjaxFormSubmit = (formId) => {
         const form = document.getElementById(formId);
         if (!form) return;
+
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(form);
@@ -143,9 +138,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }).catch(error => console.error('Erro:', error));
         });
     };
-    
-    configureAjaxForm('addCategoryForm');
-    configureAjaxForm('editCategoryForm');
+
+    handleAjaxFormSubmit('addCategoryForm');
+    handleAjaxFormSubmit('editCategoryForm');
 });
 </script>
 {% endblock %}

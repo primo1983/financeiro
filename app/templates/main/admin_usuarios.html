@@ -109,14 +109,16 @@
 {% block scripts %}
 {{ super() }}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
     const handleAjaxFormSubmit = (formId) => {
         const form = document.getElementById(formId);
         if (!form) return;
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(form);
-            fetch(form.action, { method: 'POST', body: formData, headers: { 'X-CSRFToken': form.querySelector('[name="csrf_token"]').value, 'X-Requested-With': 'XMLHttpRequest' }})
+            const actionUrl = form.getAttribute('action');
+            const csrfToken = form.querySelector('[name="csrf_token"]').value;
+            fetch(actionUrl, { method: 'POST', body: formData, headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }})
             .then(response => response.json().then(data => ({ ok: response.ok, body: data })))
             .then(({ ok, body }) => {
                 form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));

@@ -8,7 +8,6 @@ from flask_login import login_user, logout_user, login_required, current_user
 import functools
 
 def admin_required(view):
-    """Decorador que restringe o acesso apenas a administradores."""
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if not current_user.is_admin:
@@ -19,9 +18,7 @@ def admin_required(view):
 
 @auth_bp.route('/login', methods=('GET', 'POST'))
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
-    
+    if current_user.is_authenticated: return redirect(url_for('main.index'))
     form = LoginForm()
     if form.validate_on_submit():
         user = Usuario.query.filter_by(username=form.username.data).first()
@@ -30,22 +27,18 @@ def login():
         else:
             login_user(user, remember=True)
             return redirect(url_for('main.index'))
-            
     return render_template('auth/login.html', form=form)
 
 @auth_bp.route('/logout')
 @login_required
 def logout():
-    logout_user()
-    flash('Você saiu da sua conta.', 'info')
-    return redirect(url_for('auth.login'))
+    logout_user(); flash('Você saiu da sua conta.', 'info'); return redirect(url_for('auth.login'))
 
 @auth_bp.route('/perfil', methods=['GET', 'POST'])
 @login_required
 def perfil():
     user = db.session.get(Usuario, current_user.id)
     form = PerfilForm(obj=user)
-
     if form.validate_on_submit():
         if not check_password_hash(user.password, form.senha_atual.data):
             flash('A senha atual está incorreta para salvar as alterações.', 'danger')
@@ -53,11 +46,8 @@ def perfil():
             user.email = form.email.data
             if form.nova_senha.data:
                 user.password = generate_password_hash(form.nova_senha.data)
-            
-            db.session.commit()
-            flash('Perfil atualizado com sucesso!', 'success')
+            db.session.commit(); flash('Perfil atualizado com sucesso!', 'success')
             return redirect(url_for('auth.perfil'))
-    
     return render_template('auth/perfil.html', form=form)
 
 @auth_bp.route('/salvar-tema', methods=['POST'])

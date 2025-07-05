@@ -10,7 +10,9 @@
         </div>
         <div class="list-group list-group-flush border-bottom scrollarea flex-grow-1" style="overflow-y: auto;">
             <a href="{{ url_for('main.index') }}" class="list-group-item list-group-item-action p-3 {% if request.endpoint == 'main.index' %}active{% endif %}"><i class="bi bi-house-door-fill me-2"></i> Dashboard</a>
-            <a href="{{ url_for('main.transacoes_redirect') }}" class="list-group-item list-group-item-action p-3 {% if 'transacoes' in request.endpoint or 'recorrencias' in request.endpoint %}active{% endif %}"><i class="bi bi-arrow-down-up me-2"></i> Transações</a>
+            
+            <a href="{{ url_for('main.transacoes_redirect') }}" class="list-group-item list-group-item-action p-3 {% if 'listar_transacoes' in request.endpoint %}active{% endif %}"><i class="bi bi-arrow-down-up me-2"></i> Transações</a>
+            
             <a href="{{ url_for('main.gerenciar_recorrencias') }}" class="list-group-item list-group-item-action p-3 {% if 'recorrencias' in request.endpoint %}active{% endif %}"><i class="bi bi-calendar-repeat me-2"></i> Recorrências</a>
             <a href="{{ url_for('main.listar_categorias') }}" class="list-group-item list-group-item-action p-3 {% if 'categorias' in request.endpoint %}active{% endif %}"><i class="bi bi-tags-fill me-2"></i> Categorias</a>
             <a href="{{ url_for('main.analises_redirect') }}" class="list-group-item list-group-item-action p-3 {% if 'analises' in request.endpoint %}active{% endif %}"><i class="bi bi-bar-chart-line-fill me-2"></i> Análises</a>
@@ -56,6 +58,7 @@
     </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 {{ super() }}
 <script>

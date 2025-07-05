@@ -60,7 +60,7 @@
             </div>
             <div class="col-6 mb-4">
                 <div class="card shadow-sm h-100">
-                    <div class="card-body">
+                    <div class="card-body text-center">
                         <h6 class="card-subtitle mb-2 text-muted">Saldo do Mês</h6>
                         <h4 class="fw-bold mb-0">{{ saldo_mes|currency }}</h4>
                     </div>
@@ -68,7 +68,7 @@
             </div>
             <div class="col-6 mb-4">
                 <div class="card text-white bg-success shadow-sm h-100">
-                     <div class="card-body">
+                     <div class="card-body text-center">
                         <h6 class="card-subtitle mb-2">Receita do Mês</h6>
                         <h4 class="fw-bold mb-0">{{ receita_mes|currency }}</h4>
                     </div>
@@ -76,7 +76,7 @@
             </div>
             <div class="col-12">
                  <div class="card text-white bg-danger shadow-sm">
-                     <div class="card-body">
+                     <div class="card-body text-center">
                         <h6 class="card-subtitle mb-2">Despesa do Mês</h6>
                         <h4 class="fw-bold mb-0">{{ despesa_mes|currency }}</h4>
                     </div>
@@ -90,6 +90,7 @@
         </div>
     </div>
 </div>
+
 {% include 'includes/modal_transacao.html' %}
 {% endblock %}
 
