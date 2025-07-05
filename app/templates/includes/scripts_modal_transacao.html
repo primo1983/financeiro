@@ -32,20 +32,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }).catch(error => console.error('Erro:', error));
     });
 
+    // LÓGICA PARA ABRIR/EDITAR MODAL E OUTROS HELPERS
     const modalLabel = document.getElementById('modalLabel');
     const submitButton = document.getElementById('modalSubmitBtn');
     const valorInput = document.getElementById('valor');
     let valorMask;
-    if (valorInput) { valorMask = IMask(valorInput, { mask: 'R$ num', blocks: { num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', mapToRadix: ['.'] } } }); }
+    if (valorInput) {
+        valorMask = IMask(valorInput, {
+            mask: 'R$ num',
+            blocks: { num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', mapToRadix: ['.'] } }
+        });
+    }
     
     const recorrenciaSwitch = document.getElementById('recorrenciaSwitch');
     if (recorrenciaSwitch) {
         recorrenciaSwitch.addEventListener('change', function() {
             const container = document.getElementById('recorrencia-container');
-            const hiddenInput = document.getElementById('recorrencia_switch');
+            const hiddenInput = document.getElementById('recorrencia_switch_hidden_input');
             if(container) container.style.display = this.checked ? 'block' : 'none';
             if(hiddenInput) hiddenInput.value = this.checked ? 'on' : 'off';
-            if (!this.checked) { document.getElementById('recorrencia').value = 'Mensal'; document.getElementById('data_final_recorrencia').value = ''; }
+            if (!this.checked) {
+                document.getElementById('recorrencia').value = 'Mensal';
+                document.getElementById('data_final_recorrencia').value = '';
+            }
         });
     }
     
@@ -66,7 +75,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const dia = String(hoje.getDate()).padStart(2, '0');
             document.getElementById('data').value = `${ano}-${mes}-${dia}`;
             
-            if(recorrenciaSwitch) { recorrenciaSwitch.checked = false; recorrenciaSwitch.dispatchEvent(new Event('change')); }
+            if(recorrenciaSwitch) {
+                recorrenciaSwitch.checked = false;
+                recorrenciaSwitch.dispatchEvent(new Event('change'));
+            }
             filtrarCategorias();
             modal.show();
         });
@@ -123,10 +135,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (addCategoryModalEl && openAddCategoryBtn) {
         const addCategoryModal = new bootstrap.Modal(addCategoryModalEl);
         openAddCategoryBtn.addEventListener('click', (e) => { e.stopPropagation(); addCategoryModal.show(); });
+        
         const addCategoryForm = document.getElementById('addCategoryForm');
         addCategoryForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const csrf_token = form.querySelector('[name="csrf_token"]').value;
+            const csrf_token = document.querySelector('meta[name="csrf-token"]').content;
             const nomeInput = document.getElementById('quick_cat_nome');
             const tipoInput = document.getElementById('quick_cat_tipo');
             fetch("{{ url_for('main.adicionar_categoria_ajax') }}", {

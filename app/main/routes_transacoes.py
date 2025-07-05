@@ -30,26 +30,27 @@ def listar_transacoes(ano, mes):
 @main_bp.route('/transacoes/adicionar', methods=['POST'])
 @login_required
 def adicionar_transacao():
-    form = TransacaoForm(); form.categoria_id.choices = [(c.id, c.nome) for c in Categoria.query.filter_by(user_id=current_user.id).order_by(Categoria.nome).all()]
+    form = TransacaoForm()
+    form.categoria_id.choices = [(c.id, c.nome) for c in Categoria.query.filter_by(user_id=current_user.id).order_by(Categoria.nome).all()]
     if form.validate_on_submit():
         nova_transacao = Transacao( user_id=current_user.id, tipo=form.tipo.data, valor=parse_currency(form.valor.data), categoria_id=form.categoria_id.data, data=form.data.data, descricao=form.descricao.data, forma_pagamento=form.forma_pagamento.data or None, recorrencia=form.recorrencia.data if form.recorrencia_switch.data == 'on' else None, data_final_recorrencia=form.data_final_recorrencia.data if form.recorrencia_switch.data == 'on' and form.data_final_recorrencia.data else None )
         db.session.add(nova_transacao); db.session.commit(); flash('Transação adicionada!', 'success')
         return jsonify(success=True, redirect_url=url_for('main.listar_transacoes', ano=form.data.data.year, mes=form.data.data.month))
+    # CORREÇÃO: Retorna os erros em JSON para a requisição AJAX
     return jsonify(success=False, errors=form.errors), 400
 
 @main_bp.route('/transacoes/editar/<int:id>', methods=['POST'])
 @login_required
 def editar_transacao(id):
-    form = TransacaoForm(); form.categoria_id.choices = [(c.id, c.nome) for c in Categoria.query.filter_by(user_id=current_user.id).order_by(Categoria.nome).all()]
+    form = TransacaoForm()
+    form.categoria_id.choices = [(c.id, c.nome) for c in Categoria.query.filter_by(user_id=current_user.id).order_by(Categoria.nome).all()]
     transacao = db.session.get(Transacao, id)
     if not transacao or transacao.user_id != current_user.id: return ('Acesso negado', 403)
     if form.validate_on_submit():
-        transacao.tipo = form.tipo.data; transacao.valor = parse_currency(form.valor.data); transacao.categoria_id = form.categoria_id.data; transacao.data = form.data.data
-        transacao.descricao = form.descricao.data; transacao.forma_pagamento = form.forma_pagamento.data or None
-        transacao.recorrencia = form.recorrencia.data if form.recorrencia_switch.data == 'on' else None
-        transacao.data_final_recorrencia = form.data_final_recorrencia.data if transacao.recorrencia else None
+        transacao.tipo = form.tipo.data; transacao.valor = parse_currency(form.valor.data); transacao.categoria_id = form.categoria_id.data; transacao.data = form.data.data; transacao.descricao = form.descricao.data; transacao.forma_pagamento = form.forma_pagamento.data or None; transacao.recorrencia = form.recorrencia.data if form.recorrencia_switch.data == 'on' else None; transacao.data_final_recorrencia = form.data_final_recorrencia.data if transacao.recorrencia else None
         db.session.commit(); flash('Transação atualizada!', 'success')
         return jsonify(success=True, redirect_url=request.referrer or url_for('main.index'))
+    # CORREÇÃO: Retorna os erros em JSON para a requisição AJAX
     return jsonify(success=False, errors=form.errors), 400
     
 @main_bp.route('/transacoes/excluir/<int:id>', methods=['POST'])
@@ -57,7 +58,7 @@ def editar_transacao(id):
 def excluir_transacao(id):
     transacao = db.session.get(Transacao, id)
     if not transacao or transacao.user_id != current_user.id: return ('Acesso negado', 403)
-    db.session.delete(transacao); db.session.commit(); flash('Regra de transação excluída.', 'info'); return redirect(url_for('main.transacoes_redirect'))
+    db.session.delete(transacao); db.session.commit(); flash('Regra de transação excluída.', 'info'); return redirect(request.referrer or url_for('main.transacoes_redirect'))
 
 @main_bp.route('/transacoes/ignorar', methods=['POST'])
 @login_required
