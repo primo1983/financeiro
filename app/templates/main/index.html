@@ -1,0 +1,18 @@
+{% extends 'layout_app.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="row g-4">
+    </div>
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header"><i class="bi bi-bar-chart-line-fill me-2"></i>Receitas vs. Despesas (Últimos 3 Meses)</div>
+            <div class="card-body"><canvas id="barChart" style="min-height: 250px;"></canvas></div>
+            <div class="card-footer text-center bg-body-tertiary">
+                <a href="{{ url_for('main.analises_redirect') }}">Ver mais análises <i class="bi bi-arrow-right-short"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'includes/modal_transacao.html' %}
+{% endblock %}

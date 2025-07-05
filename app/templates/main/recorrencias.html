@@ -1,0 +1,67 @@
+{% extends 'layout_app.html' %}
+{% block title %}Gerenciar Recorrências{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Gerenciar Transações Recorrentes</h3>
+    <button type="button" id="openAddModalBtn" class="btn btn-primary">
+        <i class="bi bi-plus-circle-fill me-2"></i> Nova Regra Recorrente
+    </button>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <p class="text-muted">Aqui você pode ver e gerenciar todas as suas regras de transações recorrentes, independentemente do mês em que foram criadas.</p>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 40%;">Descrição</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Categoria</th>
+                        <th>Início da Recorrência</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for regra in regras %}
+                    <tr>
+                        <td class="fw-bold">{{ regra.descricao }}</td>
+                        <td>
+                            {% if regra.tipo == 'Receita' %}<span class="badge rounded-pill text-bg-success">Receita</span>
+                            {% else %}<span class="badge rounded-pill text-bg-danger">Despesa</span>{% endif %}
+                        </td>
+                        <td class="fw-bold {{ 'text-success' if regra.tipo == 'Receita' else 'text-danger' }}">{{ regra.valor|currency }}</td>
+                        <td>{{ regra.categoria.nome }}</td>
+                        <td>{{ regra.data.strftime('%d/%m/%Y') }}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-warning edit-btn" title="Editar Regra"
+                                    data-id="{{ regra.id }}" data-tipo="{{ regra.tipo }}" data-valor="{{ regra.valor }}"
+                                    data-categoria-id="{{ regra.categoria_id }}" data-data="{{ regra.data.strftime('%Y-%m-%d') }}"
+                                    data-descricao="{{ regra.descricao }}" data-forma-pagamento="{{ regra.forma_pagamento or '' }}"
+                                    data-recorrencia="{{ regra.recorrencia or '' }}" data-data-final="{{ regra.data_final_recorrencia.strftime('%Y-%m-%d') if regra.data_final_recorrencia else '' }}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <form action="{{ url_for('main.excluir_transacao', id=regra.id) }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza? Isso irá apagar esta regra e todas as suas ocorrências futuras.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Regra"><i class="bi bi-trash3"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center text-muted p-4">Nenhuma regra de recorrência encontrada.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include 'includes/modal_transacao.html' %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% include 'includes/scripts_modal_transacao.html' %}
+{% endblock %}

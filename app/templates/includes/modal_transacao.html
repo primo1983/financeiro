@@ -1,0 +1,92 @@
+<div class="modal fade" id="transactionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="transactionForm" method="post" action="" novalidate>
+                {{ form.csrf_token }}
+                {{ form.id(id="edit-id") }} 
+                <div class="modal-header"><h5 class="modal-title" id="modalLabel"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.tipo.label(class="form-label") }}
+                            {{ form.tipo(class="form-select", id="tipo") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="categoria_id" class="form-label">Categoria</label>
+                            <div class="input-group">
+                                <select name="categoria_id" id="categoria_id" class="form-select" required>
+                                    <option value="" selected disabled>Selecione...</option>
+                                    {% for cat in user_categories %}
+                                    <option value="{{ cat.id }}" data-tipo-categoria="{{ cat.tipo }}">{{ cat.nome }} ({{ cat.tipo }})</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" id="openAddCategoryModalBtn" title="Adicionar Nova Categoria"><i class="bi bi-plus-lg"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.valor.label(class="form-label") }}
+                            {{ form.valor(class="form-control", id="valor") }}
+                            <div class="mt-2 d-flex flex-wrap gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">5,00</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">10,00</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">15,00</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">20,00</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">50,00</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">100,00</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.data.label(class="form-label") }}
+                            {{ form.data(class="form-control", id="data") }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">{{ form.descricao.label(class="form-label") }}{{ form.descricao(class="form-control", id="descricao") }}</div>
+                        <div class="col-md-6 mb-3">{{ form.forma_pagamento.label(class="form-label") }}{{ form.forma_pagamento(class="form-select", id="forma_pagamento") }}</div>
+                    </div>
+                    <hr>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="recorrenciaSwitch">
+                        {{ form.recorrencia_switch(id="recorrencia_switch") }}
+                        <label class="form-check-label" for="recorrenciaSwitch">É uma transação recorrente?</label>
+                    </div>
+                    <div id="recorrencia-container" style="display: none;"><div class="row p-2 rounded" style="background-color: var(--bs-tertiary-bg);"><div class="col-md-6 mb-3">{{ form.recorrencia.label(class="form-label") }}{{ form.recorrencia(class="form-select", id="recorrencia") }}</div><div class="col-md-6 mb-3">{{ form.data_final_recorrencia.label(class="form-label") }}{{ form.data_final_recorrencia(class="form-control", id="data_final_recorrencia") }}</div></div></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary", id="modalSubmitBtn") }}</div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content bg-body-tertiary">
+            <form id="addCategoryForm" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Categoria Rápida</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="quick_cat_nome" class="form-label">Nome</label>
+                        <input type="text" id="quick_cat_nome" name="nome" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quick_cat_tipo" class="form-label">Tipo</label>
+                        <select id="quick_cat_tipo" name="tipo" class="form-select">
+                            <option value="Despesa">Despesa</option>
+                            <option value="Receita">Receita</option>
+                            <option value="Ambos">Ambos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Categoria</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

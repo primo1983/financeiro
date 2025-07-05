@@ -1,0 +1,113 @@
+{% extends 'layout_app.html' %}
+{% block title %}Análises e Relatórios{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4"><h3 class="mb-0">Análise por Período</h3></div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header"><i class="bi bi-funnel-fill me-2"></i>Filtros</div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('main.analises') }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3"><label for="inicio" class="form-label">Data de Início</label><input type="date" class="form-control" name="inicio" value="{{ data_inicio }}"></div>
+                <div class="col-md-3"><label for="fim" class="form-label">Data Final</label><input type="date" class="form-control" name="fim" value="{{ data_fim }}"></div>
+                <div class="col-md-2"><label for="tipo" class="form-label">Tipo</label><select name="tipo" class="form-select"><option value="Todos" {% if tipo_filtro == 'Todos' %}selected{% endif %}>Todas</option><option value="Receita" {% if tipo_filtro == 'Receita' %}selected{% endif %}>Receitas</option><option value="Despesa" {% if tipo_filtro == 'Despesa' %}selected{% endif %}>Despesas</option></select></div>
+                <div class="col-md-4"><label for="categoria" class="form-label">Categorias</label><select name="categoria" class="form-select" multiple size="1">{% for cat in todas_as_categorias_usuario %}<option value="{{ cat.id }}" {% if cat.id in categorias_filtro_ids %}selected{% endif %}>{{ cat.nome }}</option>{% endfor %}</select></div>
+                <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+                    <a href="{{ url_for('main.analises') }}" class="btn btn-outline-secondary">Limpar Filtros</a>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search me-2"></i>Aplicar Filtros</button>
+                    <a href="{{ url_for('main.exportar_csv') }}?{{ request.query_string.decode('utf-8') }}" class="btn btn-success" title="Exportar dados filtrados para CSV"><i class="bi bi-file-earmark-spreadsheet-fill me-2"></i>Exportar CSV</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4"><div class="card text-white bg-success"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Receitas no Período</h6><h4 class="card-title">{{ total_receitas|currency }}</h4></div></div></div>
+    <div class="col-md-4"><div class="card text-white bg-danger"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Despesas no Período</h6><h4 class="card-title">{{ total_despesas|currency }}</h4></div></div></div>
+    <div class="col-md-4"><div class="card text-white bg-primary"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Saldo do Período</h6><h4 class="card-title">{{ saldo_periodo|currency }}</h4></div></div></div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header"><i class="bi bi-graph-up me-2"></i>Fluxo de Caixa Mensal</div>
+    <div class="card-body">
+        <canvas id="fluxoDeCaixaChart" style="min-height: 300px;"></canvas>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Despesas por Categoria</div>
+            <div class="card-body">
+                <canvas id="graficoDespesas"></canvas>
+                {% if not grafico_despesas_valores %}<p class="text-center text-muted mt-3">Nenhuma despesa para exibir no período.</p>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Receitas por Categoria</div>
+            <div class="card-body">
+                <canvas id="graficoReceitas"></canvas>
+                 {% if not grafico_receitas_valores %}<p class="text-center text-muted mt-3">Nenhuma receita para exibir no período.</p>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chartColors = ['#0d6efd', '#6f42c1', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#d63384', '#fd7e14', '#20c997', '#6c757d'];
+
+    // Gráfico de Pizza - Despesas
+    const despesasPieCanvas = document.getElementById('graficoDespesas');
+    const despesasValores = {{ grafico_despesas_valores|tojson }};
+    if (despesasPieCanvas && despesasValores.length > 0) {
+        new Chart(despesasPieCanvas, {
+            type: 'pie',
+            data: {
+                labels: {{ grafico_despesas_labels|tojson }},
+                datasets: [{ data: despesasValores, backgroundColor: chartColors }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+    
+    // Gráfico de Pizza - Receitas
+    const receitasPieCanvas = document.getElementById('graficoReceitas');
+    const receitasValores = {{ grafico_receitas_valores|tojson }};
+    if (receitasPieCanvas && receitasValores.length > 0) {
+        new Chart(receitasPieCanvas, {
+            type: 'pie',
+            data: {
+                labels: {{ grafico_receitas_labels|tojson }},
+                datasets: [{ data: receitasValores, backgroundColor: chartColors }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // Gráfico de Barras - Fluxo de Caixa Mensal
+    const fluxoCanvas = document.getElementById('fluxoDeCaixaChart');
+    if (fluxoCanvas) {
+        new Chart(fluxoCanvas, {
+            type: 'bar',
+            data: {
+                labels: {{ line_chart_labels|tojson }},
+                datasets: [
+                    { label: 'Receitas', data: {{ line_chart_receitas_flow|tojson }}, backgroundColor: 'rgba(25, 135, 84, 0.7)' },
+                    { label: 'Despesas', data: {{ line_chart_despesas_flow|tojson }}, backgroundColor: 'rgba(220, 53, 69, 0.7)' }
+                ]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+    }
+});
+</script>
+{% endblock %}

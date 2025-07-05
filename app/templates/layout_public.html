@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block body_content %}
+<body class="login-body">
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'danger' %}
+                    <div class="alert alert-danger py-2" role="alert">{{ message }}</div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="main-content-container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+{% endblock %}

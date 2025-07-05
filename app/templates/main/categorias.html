@@ -1,0 +1,144 @@
+{% extends 'layout_app.html' %}
+{% block title %}Categorias{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Minhas Categorias</h3>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+        <i class="bi bi-plus-circle-fill me-2"></i> Adicionar
+    </button>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead><tr><th>Nome da Categoria</th><th>Tipo</th><th class="text-end">Ações</th></tr></thead>
+                <tbody>
+                    {% for categoria in categorias %}
+                    <tr>
+                        <td class="fw-bold">{{ categoria.nome }}</td>
+                        <td>
+                            {% if categoria.tipo == 'Receita' %}<span class="badge rounded-pill text-bg-success">Receita</span>
+                            {% elif categoria.tipo == 'Despesa' %}<span class="badge rounded-pill text-bg-danger">Despesa</span>
+                            {% else %}<span class="badge rounded-pill text-bg-primary">Ambos</span>{% endif %}
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-warning edit-btn" title="Editar Categoria"
+                                    data-id="{{ categoria.id }}" data-nome="{{ categoria.nome }}" data-tipo="{{ categoria.tipo }}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <form action="{{ url_for('main.excluir_categoria', id=categoria.id) }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esta categoria?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Categoria"><i class="bi bi-trash3"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="text-center text-muted p-4">Nenhuma categoria encontrada. Crie sua primeira categoria!</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="addCategoryForm" method="post" action="{{ url_for('main.adicionar_categoria') }}" novalidate>
+                {{ form.csrf_token }}
+                <div class="modal-header"><h5 class="modal-title">Adicionar Categoria</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {{ form.nome.label(class="form-label") }}
+                        {{ form.nome(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.tipo.label(class="form-label") }}
+                        {{ form.tipo(class="form-select") }}
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary", value="Salvar") }}</div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="editCategoryForm" method="post" action="" novalidate>
+                {{ form.csrf_token }}
+                <input type="hidden" name="id" id="edit-id">
+                <div class="modal-header"><h5 class="modal-title">Editar Categoria</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {{ form.nome.label(class="form-label") }}
+                        {{ form.nome(class="form-control", id="edit-nome") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.tipo.label(class="form-label") }}
+                        {{ form.tipo(class="form-select", id="edit-tipo") }}
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary", value="Salvar Alterações") }}</div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const editModalEl = document.getElementById('editCategoryModal');
+    if (editModalEl) {
+        const editModal = new bootstrap.Modal(editModalEl);
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const id = this.dataset.id;
+                const form = document.getElementById('editCategoryForm');
+                form.action = `/categorias/editar/${id}`;
+                form.querySelector('#edit-id').value = id;
+                form.querySelector('#edit-nome').value = this.dataset.nome;
+                form.querySelector('#edit-tipo').value = this.dataset.tipo;
+                editModal.show();
+            });
+        });
+    }
+
+    const handleAjaxFormSubmit = (formId) => {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const actionUrl = form.getAttribute('action');
+            const csrfToken = form.querySelector('[name="csrf_token"]').value;
+            fetch(actionUrl, {
+                method: 'POST', body: formData,
+                headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json().then(data => ({ ok: response.ok, body: data })))
+            .then(({ ok, body }) => {
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                if (ok && body.success) {
+                    window.location.href = body.redirect_url;
+                } else {
+                    for (const fieldName in body.errors) {
+                        const field = form.querySelector(`[name="${fieldName}"]`);
+                        if (field) { field.classList.add('is-invalid'); }
+                    }
+                }
+            }).catch(error => console.error('Erro:', error));
+        });
+    };
+
+    // CORREÇÃO: Chamando a função com o nome correto
+    handleAjaxFormSubmit('addCategoryForm');
+    handleAjaxFormSubmit('editCategoryForm');
+});
+</script>
+{% endblock %}
