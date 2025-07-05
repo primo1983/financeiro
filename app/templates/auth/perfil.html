@@ -3,6 +3,7 @@
 
 {% block content %}
 <h3 class="mb-4">Perfil e Configurações</h3>
+
 <div class="row g-4">
     <div class="col-lg-7">
         <div class="card shadow-sm">
@@ -11,20 +12,22 @@
                 <form method="post" action="{{ url_for('auth.perfil') }}" novalidate>
                     {{ form.csrf_token }}
                     <input type="hidden" name="theme" id="hidden_theme_field" value="{{ form.theme.data }}">
+
                     <h6 class="text-muted">Informações da Conta</h6>
-                    <div class="mb-3"><label class="form-label">Nome de Usuário</label><input type="text" class="form-control" value="{{ current_user.username }}" disabled readonly></div>
+                    <div class="mb-3">
+                        <label class="form-label">Nome de Usuário</label>
+                        <input type="text" class="form-control" value="{{ current_user.username }}" disabled readonly>
+                    </div>
                     <div class="mb-3">
                         {{ form.email.label(class="form-label") }}
                         {{ form.email(class="form-control " + ('is-invalid' if form.email.errors else '')) }}
-                        {% for error in form.email.errors %}{% if 'obrigatório' not in error %}<div class="invalid-feedback">{{ error }}</div>{% endif %}{% endfor %}
+                        {% for error in form.email.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
                     </div>
-                    <div class="mb-4">
-                        {{ form.senha_atual.label(class="form-label fw-bold") }}
-                        {{ form.senha_atual(class="form-control " + ('is-invalid' if form.senha_atual.errors else ''), placeholder="Senha obrigatória para salvar") }}
-                        <div class="form-text">Para salvar qualquer alteração, confirme com sua senha atual.</div>
-                    </div>
+                    
                     <hr class="my-4">
+                    
                     <h6 class="text-muted">Alterar Senha (Opcional)</h6>
+                    <div class="form-text mb-2">Para criar uma nova senha, preencha os dois campos abaixo. Para manter a senha atual, deixe-os em branco.</div>
                     <div class="mb-3">
                         {{ form.nova_senha.label(class="form-label") }}
                         {{ form.nova_senha(class="form-control " + ('is-invalid' if form.nova_senha.errors else '')) }}
@@ -35,41 +38,70 @@
                         {{ form.confirmar_senha(class="form-control " + ('is-invalid' if form.confirmar_senha.errors else '')) }}
                         {% for error in form.confirmar_senha.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
                     </div>
-                    <div class="mt-4">{{ form.submit(class="btn btn-primary") }}</div>
+
+                    <hr class="my-4">
+
+                    <h6 class="fw-bold">Confirmação Obrigatória</h6>
+                    <div class="mb-3">
+                        {{ form.senha_atual.label(class="form-label") }}
+                        {{ form.senha_atual(class="form-control " + ('is-invalid' if form.senha_atual.errors else ''), placeholder="Senha obrigatória para salvar") }}
+                        <div class="form-text">Para salvar qualquer alteração de e-mail ou senha, confirme com sua senha atual.</div>
+                    </div>
+
+                    <div class="mt-4">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
                 </form>
             </div>
         </div>
     </div>
+    
     <div class="col-lg-5">
         <div class="card shadow-sm">
             <div class="card-header"><h5 class="mb-0">Aparência</h5></div>
             <div class="card-body p-4">
-                 <form id="themeForm" novalidate>
-                    {{ form.csrf_token }}
-                    <h6 class="mb-3">Tema</h6>
-                    <div class="d-grid gap-2">
-                        {% for subfield in form.theme %}<input type="radio" class="btn-check" name="theme" id="theme-{{ subfield.data }}" value="{{ subfield.data }}" autocomplete="off" {% if subfield.data == form.theme.data %}checked{% endif %}><label class="btn btn-outline-secondary d-flex align-items-center justify-content-center" for="theme-{{ subfield.data }}">{% if subfield.data == 'light' %}<i class="bi bi-sun-fill me-2"></i>{% elif subfield.data == 'dark' %}<i class="bi bi-moon-stars-fill me-2"></i>{% else %}<i class="bi bi-circle-half me-2"></i>{% endif %}{{ subfield.label.text }}</label>{% endfor %}
-                    </div>
-                    <div class="form-text text-center mt-3">Sua preferência de tema é salva automaticamente.</div>
-                 </form>
+                <h6 class="mb-3">Tema</h6>
+                <div class="d-grid gap-2">
+                    {% for subfield in form.theme %}
+                    <input type="radio" class="btn-check" name="theme-options" id="theme-{{ subfield.data }}" value="{{ subfield.data }}" autocomplete="off" {% if subfield.data == form.theme.data %}checked{% endif %}>
+                    <label class="btn btn-outline-secondary d-flex align-items-center justify-content-center" for="theme-{{ subfield.data }}">
+                        {% if subfield.data == 'light' %}<i class="bi bi-sun-fill me-2"></i>
+                        {% elif subfield.data == 'dark' %}<i class="bi bi-moon-stars-fill me-2"></i>
+                        {% else %}<i class="bi bi-circle-half me-2"></i>
+                        {% endif %}
+                        {{ subfield.label.text }}
+                    </label>
+                    {% endfor %}
+                </div>
+                <div class="form-text text-center mt-3">Sua preferência de tema é salva automaticamente ao clicar.</div>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
+
+
 {% block scripts %}
 {{ super() }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const themeRadios = document.querySelectorAll('.btn-check[name="theme"]');
+        const themeRadios = document.querySelectorAll('.btn-check[name="theme-options"]');
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const hiddenThemeField = document.getElementById('hidden_theme_field');
+
         themeRadios.forEach(radio => {
             radio.addEventListener('change', function() {
                 const newTheme = this.value;
                 document.documentElement.setAttribute('data-bs-theme', newTheme);
-                if (hiddenThemeField) { hiddenThemeField.value = newTheme; }
-                fetch("{{ url_for('auth.salvar_tema') }}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ theme: newTheme }) });
+                if (hiddenThemeField) {
+                    hiddenThemeField.value = newTheme;
+                }
+                
+                fetch("{{ url_for('auth.salvar_tema') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ theme: newTheme })
+                });
             });
         });
     });
