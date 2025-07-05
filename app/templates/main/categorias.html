@@ -82,7 +82,7 @@
                         {{ form.tipo(class="form-select", id="edit-tipo") }}
                     </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary", value="Salvar Alterações") }}</div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary") }}</div>
             </form>
         </div>
     </div>
@@ -101,6 +101,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const id = this.dataset.id;
                 const form = document.getElementById('editCategoryForm');
                 form.action = `/categorias/editar/${id}`;
+                // Limpa erros antigos antes de preencher
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                
                 form.querySelector('#edit-id').value = id;
                 form.querySelector('#edit-nome').value = this.dataset.nome;
                 form.querySelector('#edit-tipo').value = this.dataset.tipo;
@@ -128,17 +131,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
                 
                 if (ok && body.success) {
-                    window.location.href = body.redirect_url;
+                    window.location.reload();
                 } else {
                     for (const fieldName in body.errors) {
                         const field = form.querySelector(`[name="${fieldName}"]`);
-                        if (field) { field.classList.add('is-invalid'); }
+                        if (field) { 
+                            field.classList.add('is-invalid');
+                        }
                     }
                 }
-            }).catch(error => console.error('Erro:', error));
+            }).catch(error => console.error('Erro de Fetch:', error));
         });
     };
-
+    
     handleAjaxFormSubmit('addCategoryForm');
     handleAjaxFormSubmit('editCategoryForm');
 });

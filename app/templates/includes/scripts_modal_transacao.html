@@ -2,25 +2,17 @@
 document.addEventListener('DOMContentLoaded', function () {
     const transactionModalEl = document.getElementById('transactionModal');
     if (!transactionModalEl) return;
-
     const modal = new bootstrap.Modal(transactionModalEl);
     const form = document.getElementById('transactionForm');
-    
-    // LÓGICA DE ENVIO DO FORMULÁRIO PRINCIPAL COM AJAX
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(form);
         const actionUrl = form.getAttribute('action');
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        fetch(actionUrl, {
-            method: 'POST', body: formData,
-            headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }
-        })
+        fetch(actionUrl, { method: 'POST', body: formData, headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }})
         .then(response => response.json().then(data => ({ ok: response.ok, body: data })))
         .then(({ ok, body }) => {
             form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            
             if (ok && body.success) {
                 window.location.href = body.redirect_url;
             } else {
@@ -32,29 +24,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }).catch(error => console.error('Erro:', error));
     });
 
-    // LÓGICA PARA ABRIR/EDITAR MODAL E OUTROS HELPERS
     const modalLabel = document.getElementById('modalLabel');
     const submitButton = document.getElementById('modalSubmitBtn');
     const valorInput = document.getElementById('valor');
     let valorMask;
-    if (valorInput) {
-        valorMask = IMask(valorInput, {
-            mask: 'R$ num',
-            blocks: { num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', mapToRadix: ['.'] } }
-        });
-    }
+    if (valorInput) { valorMask = IMask(valorInput, { mask: 'R$ num', blocks: { num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', mapToRadix: ['.'] } } }); }
     
     const recorrenciaSwitch = document.getElementById('recorrenciaSwitch');
-    if (recorrenciaSwitch) {
+    const hiddenRecorrenciaSwitch = document.getElementById('recorrencia_switch_hidden_input');
+    if (recorrenciaSwitch && hiddenRecorrenciaSwitch) {
         recorrenciaSwitch.addEventListener('change', function() {
             const container = document.getElementById('recorrencia-container');
-            const hiddenInput = document.getElementById('recorrencia_switch_hidden_input');
+            hiddenRecorrenciaSwitch.value = this.checked ? 'on' : 'off';
             if(container) container.style.display = this.checked ? 'block' : 'none';
-            if(hiddenInput) hiddenInput.value = this.checked ? 'on' : 'off';
-            if (!this.checked) {
-                document.getElementById('recorrencia').value = 'Mensal';
-                document.getElementById('data_final_recorrencia').value = '';
-            }
+            if (!this.checked) { document.getElementById('recorrencia').value = 'Mensal'; document.getElementById('data_final_recorrencia').value = ''; }
         });
     }
     
@@ -68,17 +51,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if(submitButton) submitButton.value = 'Salvar';
             form.reset(); 
             if(valorMask) valorMask.unmaskedValue = '';
-            
-            const hoje = new Date();
-            const ano = hoje.getFullYear();
-            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-            const dia = String(hoje.getDate()).padStart(2, '0');
+            const hoje = new Date(); const ano = hoje.getFullYear(); const mes = String(hoje.getMonth() + 1).padStart(2, '0'); const dia = String(hoje.getDate()).padStart(2, '0');
             document.getElementById('data').value = `${ano}-${mes}-${dia}`;
-            
-            if(recorrenciaSwitch) {
-                recorrenciaSwitch.checked = false;
-                recorrenciaSwitch.dispatchEvent(new Event('change'));
-            }
+            if(recorrenciaSwitch) { recorrenciaSwitch.checked = false; recorrenciaSwitch.dispatchEvent(new Event('change')); }
             filtrarCategorias();
             modal.show();
         });
@@ -89,11 +64,8 @@ document.addEventListener('DOMContentLoaded', function () {
             form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
             modalLabel.textContent = 'Editar Transação';
             if(submitButton) submitButton.value = 'Salvar Alterações';
-            form.reset();
-            const id = this.dataset.id;
-            form.action = `/transacoes/editar/${id}`;
-            form.querySelector('#edit-id').value = id;
-            document.getElementById('tipo').value = this.dataset.tipo;
+            form.reset(); const id = this.dataset.id; form.action = `/transacoes/editar/${id}`;
+            form.querySelector('#edit-id').value = id; document.getElementById('tipo').value = this.dataset.tipo;
             if(valorMask) valorMask.unmaskedValue = this.dataset.valor;
             document.getElementById('descricao').value = this.dataset.descricao;
             document.getElementById('data').value = this.dataset.data;
@@ -105,8 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('data_final_recorrencia').value = this.dataset.dataFinal;
                 recorrenciaSwitch.dispatchEvent(new Event('change'));
             }
-            filtrarCategorias(this.dataset.tipo);
-            document.getElementById('categoria_id').value = this.dataset.categoriaId;
+            filtrarCategorias(this.dataset.tipo); document.getElementById('categoria_id').value = this.dataset.categoriaId;
             modal.show();
         });
     });
@@ -135,7 +106,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (addCategoryModalEl && openAddCategoryBtn) {
         const addCategoryModal = new bootstrap.Modal(addCategoryModalEl);
         openAddCategoryBtn.addEventListener('click', (e) => { e.stopPropagation(); addCategoryModal.show(); });
-        
         const addCategoryForm = document.getElementById('addCategoryForm');
         addCategoryForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -155,10 +125,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     const optionText = `${data.categoria.nome} (${data.categoria.tipo})`;
                     const newOption = new Option(optionText, data.categoria.id, false, true);
                     newOption.dataset.tipoCategoria = data.categoria.tipo;
-                    mainCategorySelect.add(newOption);
-                    mainCategorySelect.value = data.categoria.id;
-                    addCategoryModal.hide();
-                    this.reset();
+                    mainCategorySelect.add(newOption); mainCategorySelect.value = data.categoria.id;
+                    addCategoryModal.hide(); this.reset();
                 } else {
                     for (const fieldName in data.errors) {
                         const field = addCategoryForm.querySelector(`[name="${fieldName}"]`);
@@ -177,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const searchTerm = this.value;
             if (searchTerm.length < 3) { return; }
             debounceTimeout = setTimeout(() => {
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
                 fetch("{{ url_for('main.sugerir_dados') }}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, body: JSON.stringify({ descricao: searchTerm }) })
                 .then(response => response.json())
                 .then(data => {
