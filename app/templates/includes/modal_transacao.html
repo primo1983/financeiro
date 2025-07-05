@@ -4,7 +4,10 @@
             <form id="transactionForm" method="post" action="" novalidate>
                 {{ form.csrf_token }}
                 {{ form.id(id="edit-id") }} 
-                <div class="modal-header"><h5 class="modal-title" id="modalLabel"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -43,18 +46,38 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">{{ form.descricao.label(class="form-label") }}{{ form.descricao(class="form-control", id="descricao") }}</div>
-                        <div class="col-md-6 mb-3">{{ form.forma_pagamento.label(class="form-label") }}{{ form.forma_pagamento(class="form-select", id="forma_pagamento") }}</div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.descricao.label(class="form-label") }}
+                            {{ form.descricao(class="form-control", id="descricao") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.forma_pagamento.label(class="form-label") }}
+                            {{ form.forma_pagamento(class="form-select", id="forma_pagamento") }}
+                        </div>
                     </div>
                     <hr>
                     <div class="form-check form-switch mb-2">
+                        {{ form.recorrencia_switch.render_kw={'class': 'form-check-input', 'role': 'switch', 'id': 'recorrenciaSwitch'} | unused }}
                         <input class="form-check-input" type="checkbox" role="switch" id="recorrenciaSwitch">
-                        {{ form.recorrencia_switch(id="recorrencia_switch") }}
                         <label class="form-check-label" for="recorrenciaSwitch">É uma transação recorrente?</label>
                     </div>
-                    <div id="recorrencia-container" style="display: none;"><div class="row p-2 rounded" style="background-color: var(--bs-tertiary-bg);"><div class="col-md-6 mb-3">{{ form.recorrencia.label(class="form-label") }}{{ form.recorrencia(class="form-select", id="recorrencia") }}</div><div class="col-md-6 mb-3">{{ form.data_final_recorrencia.label(class="form-label") }}{{ form.data_final_recorrencia(class="form-control", id="data_final_recorrencia") }}</div></div></div>
+                    <div id="recorrencia-container" style="display: none;">
+                        <div class="row p-2 rounded" style="background-color: var(--bs-tertiary-bg);">
+                            <div class="col-md-6 mb-3">
+                                {{ form.recorrencia.label(class="form-label") }}
+                                {{ form.recorrencia(class="form-select", id="recorrencia") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.data_final_recorrencia.label(class="form-label") }}
+                                {{ form.data_final_recorrencia(class="form-control", id="data_final_recorrencia") }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary", id="modalSubmitBtn") }}</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    {{ form.submit(class="btn btn-primary", id="modalSubmitBtn") }}
+                </div>
             </form>
         </div>
     </div>
@@ -66,7 +89,7 @@
             <form id="addCategoryForm" novalidate>
                 <div class="modal-header">
                     <h5 class="modal-title">Adicionar Categoria Rápida</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
