@@ -1,4 +1,4 @@
-<script>
+<script defer>
 document.addEventListener('DOMContentLoaded', function () {
     const transactionModalEl = document.getElementById('transactionModal');
     if (!transactionModalEl) return;
@@ -23,13 +23,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }).catch(error => console.error('Erro:', error));
     });
-
     const modalLabel = document.getElementById('modalLabel');
     const submitButton = document.getElementById('modalSubmitBtn');
     const valorInput = document.getElementById('valor');
     let valorMask;
     if (valorInput) { valorMask = IMask(valorInput, { mask: 'R$ num', blocks: { num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', mapToRadix: ['.'] } } }); }
-    
     const recorrenciaSwitch = document.getElementById('recorrenciaSwitch');
     const hiddenRecorrenciaSwitch = document.getElementById('recorrencia_switch_hidden_input');
     if (recorrenciaSwitch && hiddenRecorrenciaSwitch) {
@@ -40,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!this.checked) { document.getElementById('recorrencia').value = 'Mensal'; document.getElementById('data_final_recorrencia').value = ''; }
         });
     }
-    
     const addBtn = document.getElementById('openAddModalBtn');
     if (addBtn) {
         addBtn.addEventListener('click', function(e) {
@@ -58,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.show();
         });
     }
-
     document.querySelectorAll('.edit-btn').forEach(button => {
         button.addEventListener('click', function() {
             form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
@@ -81,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.show();
         });
     });
-    
     function filtrarCategorias(tipoTransacao = null) {
         if (tipoTransacao === null) tipoTransacao = document.getElementById('tipo').value;
         const selectCategoria = document.getElementById('categoria_id');
@@ -100,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     const tipoSelect = document.getElementById('tipo');
     if(tipoSelect) { tipoSelect.addEventListener('change', () => filtrarCategorias()); }
-
     const addCategoryModalEl = document.getElementById('addCategoryModal');
     const openAddCategoryBtn = document.getElementById('openAddCategoryModalBtn');
     if (addCategoryModalEl && openAddCategoryBtn) {
@@ -136,7 +130,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
-
     let debounceTimeout;
     const descricaoInput = document.getElementById('descricao');
     if (descricaoInput) {
@@ -155,7 +148,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 500);
         });
     }
-    
     const quickValueButtons = document.querySelectorAll('.quick-value-btn');
     if (valorMask) {
         quickValueButtons.forEach(button => {
