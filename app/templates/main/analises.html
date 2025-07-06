@@ -3,61 +3,24 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4"><h3 class="mb-0">Análise por Período</h3></div>
-
 <div class="card shadow-sm mb-4">
     <div class="card-header"><i class="bi bi-funnel-fill me-2"></i>Filtros</div>
     <div class="card-body">
         <form id="filterForm" method="GET" action="">
             <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label for="ano" class="form-label">Ano</label>
-                    <select name="ano" id="ano" class="form-select">
-                        {% for i in range(2023, 2031) %}
-                            <option value="{{ i }}" {% if i == ano_selecionado %}selected{% endif %}>{{ i }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="mes" class="form-label">Mês</label>
-                    <select name="mes" id="mes" class="form-select">
-                        <option value="0" {% if mes_selecionado == 0 %}selected{% endif %}>Ano Inteiro</option>
-                        {% for i in range(1, 13) %}
-                            <option value="{{ i }}" {% if i == mes_selecionado %}selected{% endif %}>{{ i }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-6 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-2"></i>Filtrar Período</button>
-                </div>
+                <div class="col-md-3"><label for="ano" class="form-label">Ano</label><select name="ano" id="ano" class="form-select">{% for i in range(2023, 2031) %}<option value="{{ i }}" {% if i == ano_selecionado %}selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
+                <div class="col-md-3"><label for="mes" class="form-label">Mês</label><select name="mes" id="mes" class="form-select"><option value="0" {% if mes_selecionado == 0 %}selected{% endif %}>Ano Inteiro</option>{% for i in range(1, 13) %}<option value="{{ i }}" {% if i == mes_selecionado %}selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
+                <div class="col-md-6 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-2"></i>Filtrar Período</button></div>
             </div>
         </form>
     </div>
 </div>
-
 {% include 'includes/_summary_cards.html' %}
-
 <div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Despesas por Categoria</div>
-            <div class="card-body">
-                <canvas id="graficoDespesas"></canvas>
-                {% if not grafico_despesas_valores %}<p class="text-center text-muted mt-3">Nenhuma despesa para exibir no período.</p>{% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Receitas por Categoria</div>
-            <div class="card-body">
-                <canvas id="graficoReceitas"></canvas>
-                 {% if not grafico_receitas_valores %}<p class="text-center text-muted mt-3">Nenhuma receita para exibir no período.</p>{% endif %}
-            </div>
-        </div>
-    </div>
+    <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Despesas por Categoria</div><div class="card-body"><canvas id="graficoDespesas"></canvas>{% if not grafico_despesas_valores %}<p class="text-center text-muted mt-3">Nenhuma despesa para exibir.</p>{% endif %}</div></div></div>
+    <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Receitas por Categoria</div><div class="card-body"><canvas id="graficoReceitas"></canvas>{% if not grafico_receitas_valores %}<p class="text-center text-muted mt-3">Nenhuma receita para exibir.</p>{% endif %}</div></div></div>
 </div>
 {% endblock %}
-
 
 {% block scripts %}
 {{ super() }}
@@ -72,21 +35,16 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = `/analises/${ano}/${mes}`;
         });
     }
-
-    const chartColors = ['#0d6efd', '#6f42c1', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#d63384', '#fd7e14', '#20c997', '#6c757d'];
-
-    // GRÁFICO DE PIZZA - DESPESAS
+    const chartColors = ['#0d6efd', '#6f42c1', '#198754', '#dc3545', '#ffc107', '#0dcaf0'];
     const despesasPieCanvas = document.getElementById('graficoDespesas');
     const despesasValores = {{ grafico_despesas_valores|tojson }};
     if (despesasPieCanvas && despesasValores.length > 0) {
-        new Chart(despesasPieCanvas.getContext('2d'), { type: 'pie', data: { labels: {{ grafico_despesas_labels|tojson }}, datasets: [{ data: despesasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+        new Chart(despesasPieCanvas, { type: 'pie', data: { labels: {{ grafico_despesas_labels|tojson }}, datasets: [{ data: despesasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
     }
-    
-    // GRÁFICO DE PIZZA - RECEITAS
     const receitasPieCanvas = document.getElementById('graficoReceitas');
     const receitasValores = {{ grafico_receitas_valores|tojson }};
     if (receitasPieCanvas && receitasValores.length > 0) {
-        new Chart(receitasPieCanvas.getContext('2d'), { type: 'pie', data: { labels: {{ grafico_receitas_labels|tojson }}, datasets: [{ data: receitasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+        new Chart(receitasPieCanvas, { type: 'pie', data: { labels: {{ grafico_receitas_labels|tojson }}, datasets: [{ data: receitasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
     }
 });
 </script>

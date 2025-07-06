@@ -1,25 +1,25 @@
 <div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-success">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Receitas no Período</h6>
-                <h4 class="card-title">{{ total_receitas|currency }}</h4>
+    <div class="col-6">
+        <div class="card text-white bg-success shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2">Receita do Mês</h6>
+                <h4 class="fw-bold mb-0">{{ receita_mes|currency }}</h4>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-danger">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Despesas no Período</h6>
-                <h4 class="card-title">{{ total_despesas|currency }}</h4>
+    <div class="col-6">
+        <div class="card text-white bg-danger shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2">Despesa do Mês</h6>
+                <h4 class="fw-bold mb-0">{{ despesa_mes|currency }}</h4>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-primary">
+    <div class="col-12">
+        <div class="card shadow-sm">
             <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Saldo do Período</h6>
-                <h4 class="card-title">{{ saldo_periodo|currency }}</h4>
+                <h6 class="card-subtitle text-muted mb-2">Saldo do Mês</h6>
+                <h4 class="fw-bold mb-0">{{ saldo_mes|currency }}</h4>
             </div>
         </div>
     </div>
