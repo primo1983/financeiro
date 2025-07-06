@@ -5,7 +5,6 @@ from app.models import Usuario
 from app.forms import AdminUserCreateForm, AdminUserEditForm
 from flask_login import login_required, current_user
 from app.auth.routes import admin_required
-from werkzeug.security import generate_password_hash
 
 @main_bp.route('/admin/usuarios')
 @login_required
@@ -27,7 +26,11 @@ def adicionar_usuario():
         email_existente = Usuario.query.filter_by(email=email).first() if email else None
         if user_existente: return jsonify(success=False, errors={'username': ['Este nome de usuário já está em uso.']}), 400
         if email_existente: return jsonify(success=False, errors={'email': ['Este e-mail já está em uso.']}), 400
-        novo_usuario = Usuario(username=username, email=email, password=generate_password_hash(form.password.data), is_admin=form.is_admin.data)
+        
+        # CORREÇÃO: Usando o método set_password para criptografar a senha corretamente
+        novo_usuario = Usuario(username=username, email=email, is_admin=form.is_admin.data)
+        novo_usuario.set_password(form.password.data)
+        
         db.session.add(novo_usuario); db.session.commit(); flash(f"Usuário '{username}' criado com sucesso!", 'success')
         return jsonify(success=True, redirect_url=url_for('main.listar_usuarios'))
     return jsonify(success=False, errors=form.errors), 400
@@ -46,7 +49,7 @@ def editar_usuario(id):
         user_to_edit.email = form.email.data or None
         user_to_edit.is_admin = form.is_admin.data
         if form.password.data:
-            user_to_edit.password = generate_password_hash(form.password.data)
+            user_to_edit.set_password(form.password.data) # Usa o método correto aqui também
         db.session.commit(); flash(f"Usuário '{user_to_edit.username}' atualizado com sucesso!", 'success')
         return jsonify(success=True, redirect_url=url_for('main.listar_usuarios'))
     return jsonify(success=False, errors=form.errors), 400

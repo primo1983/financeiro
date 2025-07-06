@@ -6,7 +6,6 @@
     <h3 class="mb-0">Histórico de Transações</h3>
     <button type="button" id="openAddModalBtn" class="btn btn-primary"><i class="bi bi-plus-circle-fill me-2"></i> Adicionar Transação</button>
 </div>
-
 <div class="card shadow-sm">
     <div class="card-header bg-body-tertiary">
         <nav class="d-flex justify-content-between align-items-center" aria-label="Navegação de meses">
@@ -19,32 +18,30 @@
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th style="width: 40%;">Descrição</th>
                     <th>Tipo</th>
-                    <th>Valor</th>
                     <th>Categoria</th>
+                    <th style="width: 35%;">Descrição</th>
                     <th>Data</th>
+                    <th>Valor</th>
                     <th class="text-end">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for transacao in transacoes %}
                 <tr class="{{ 'text-muted opacity-75 text-decoration-line-through bg-body-tertiary' if transacao.is_skipped else '' }}">
-                    <td class="fw-bold">
-                        {{ transacao.descricao }}
-                        {% if not transacao.is_skipped and transacao.recorrencia %}
-                            <span class="ms-2 text-primary-emphasis fw-normal" style="font-size: 0.85em;">
-                                <i class="bi bi-arrow-repeat"></i> ({{ transacao.recorrencia }})
-                            </span>
-                        {% endif %}
-                    </td>
                     <td>
                         {% if transacao.tipo == 'Receita' %}<span class="badge rounded-pill text-bg-success">Receita</span>
                         {% else %}<span class="badge rounded-pill text-bg-danger">Despesa</span>{% endif %}
                     </td>
-                    <td class="fw-bold {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</td>
                     <td>{{ transacao.categoria_nome }}</td>
+                    <td>
+                        <div class="fw-bold">{{ transacao.descricao }}</div>
+                        {% if not transacao.is_skipped and transacao.recorrencia %}
+                            <small class="text-primary-emphasis fw-normal"><i class="bi bi-arrow-repeat"></i> {{ transacao.recorrencia }}</small>
+                        {% endif %}
+                    </td>
                     <td>{{ transacao.data.strftime('%d/%m/%Y') }}</td>
+                    <td class="fw-bold {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</td>
                     <td class="text-end">
                         {% if transacao.is_skipped %}
                             <form action="{{ url_for('main.reativar_ocorrencia') }}" method="post" class="d-inline" onsubmit="return confirm('Deseja reativar esta ocorrência?');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/><input type="hidden" name="transacao_id" value="{{ transacao.id }}"><input type="hidden" name="data_excecao" value="{{ transacao.data.strftime('%Y-%m-%d') }}"><button type="submit" class="btn btn-sm btn-outline-success" title="Reativar esta ocorrência"><i class="bi bi-calendar-check"></i></button></form>
@@ -68,7 +65,4 @@
 {% include 'includes/modal_transacao.html' %}
 {% endblock %}
 
-{% block scripts %}
-{{ super() }}
-{% include 'includes/scripts_modal_transacao.html' %}
-{% endblock %}
+{% block scripts %}{{ super() }}{% include 'includes/scripts_modal_transacao.html' %}{% endblock %}

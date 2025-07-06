@@ -9,7 +9,6 @@ from dateutil.relativedelta import relativedelta
 import io, csv
 
 def get_transacoes_filtradas_analise(user_id, data_inicio, data_fim):
-    """Função auxiliar para buscar e filtrar transações para a página de análises."""
     tipo_filtro = request.args.get('tipo', 'Todos')
     categorias_filtro_ids_str = request.args.getlist('categoria')
     regras_transacoes = Transacao.query.filter_by(user_id=user_id).options(db.joinedload(Transacao.categoria)).all()
@@ -25,6 +24,7 @@ def get_transacoes_filtradas_analise(user_id, data_inicio, data_fim):
 @main_bp.route('/analises')
 @login_required
 def analises_redirect():
+    """Redireciona para a página de análises do mês atual."""
     hoje = date.today()
     return redirect(url_for('main.analises', ano=hoje.year, mes=hoje.month))
 
@@ -34,28 +34,15 @@ def analises(ano, mes):
     user_id = current_user.id
     data_inicio = date(ano, mes, 1)
     data_fim = data_inicio + relativedelta(months=1) - relativedelta(days=1)
-    
     transacoes_filtradas, tipo_filtro, categorias_filtro_ids = get_transacoes_filtradas_analise(user_id, data_inicio, data_fim)
     resumo_periodo = calcular_resumo_financeiro(transacoes_filtradas)
     todas_as_categorias_usuario = Categoria.query.filter_by(user_id=user_id).order_by(Categoria.nome).all()
-
     return render_template('main/analises.html', 
         data_inicio=data_inicio.strftime('%Y-%m-%d'), data_fim=data_fim.strftime('%Y-%m-%d'),
-        ano_selecionado=ano, mes_selecionado=mes,
-        tipo_filtro=tipo_filtro, categorias_filtro_ids=categorias_filtro_ids,
-        todas_as_categorias_usuario=todas_as_categorias_usuario,
-        total_receitas=resumo_periodo['total_receitas'], 
-        total_despesas=resumo_periodo['total_despesas'],
-        saldo_periodo=resumo_periodo['saldo'],
-        # Passando os dados para os gráficos de pizza
+        ano_selecionado=ano, mes_selecionado=mes, tipo_filtro=tipo_filtro, categorias_filtro_ids=categorias_filtro_ids,
+        todas_as_categorias_usuario=todas_as_categorias_usuario, total_receitas=resumo_periodo['total_receitas'], 
+        total_despesas=resumo_periodo['total_despesas'], saldo_periodo=resumo_periodo['saldo'],
         grafico_despesas_labels=list(resumo_periodo['despesas_por_categoria'].keys()), 
         grafico_despesas_valores=[float(v) for v in resumo_periodo['despesas_por_categoria'].values()],
         grafico_receitas_labels=list(resumo_periodo['receitas_por_categoria'].keys()), 
-        grafico_receitas_valores=[float(v) for v in resumo_periodo['receitas_por_categoria'].values()]
-    )
-
-# A rota de exportação permanece a mesma, não precisa de alteração
-@main_bp.route('/exportar/csv')
-@login_required
-def exportar_csv():
-    pass
+        grafico_receitas_valores=[float(v) for v in resumo_periodo['receitas_por_categoria'].values()])

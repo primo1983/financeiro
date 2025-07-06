@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block body_content %}
 <div class="d-flex" id="wrapper">
     <div class="d-flex flex-column flex-shrink-0 border-end" id="sidebar-wrapper">
@@ -10,14 +11,14 @@
         </div>
         <div class="list-group list-group-flush border-bottom scrollarea flex-grow-1" style="overflow-y: auto;">
             <a href="{{ url_for('main.index') }}" class="list-group-item list-group-item-action p-3 {% if request.endpoint == 'main.index' %}active{% endif %}"><i class="bi bi-house-door-fill me-2"></i> Dashboard</a>
-            <a href="{{ url_for('main.transacoes_redirect') }}" class="list-group-item list-group-item-action p-3 {% if 'listar_transacoes' in request.endpoint %}active{% endif %}"><i class="bi bi-arrow-down-up me-2"></i> Transações</a>
-            
-            <a href="{{ url_for('main.listar_categorias') }}" class="list-group-item list-group-item-action p-3 {% if 'categorias' in request.endpoint %}active{% endif %}"><i class="bi bi-tags-fill me-2"></i> Categorias</a>
+            <a href="{{ url_for('main.transacoes_redirect') }}" class="list-group-item list-group-item-action p-3 {% if 'listar_transacoes' in request.endpoint or 'gerenciar_recorrencias' in request.endpoint %}active{% endif %}"><i class="bi bi-arrow-down-up me-2"></i> Transações</a>
+            <a href="{{ url_for('main.listar_categorias') }}" class="list-group-item list-group-item-action p-3 {% if 'listar_categorias' in request.endpoint %}active{% endif %}"><i class="bi bi-tags-fill me-2"></i> Categorias</a>
             <a href="{{ url_for('main.analises_redirect') }}" class="list-group-item list-group-item-action p-3 {% if 'analises' in request.endpoint %}active{% endif %}"><i class="bi bi-bar-chart-line-fill me-2"></i> Análises</a>
             
             {% if current_user.is_admin %}
-            <div class="mt-2 px-3"><small class="text-muted text-uppercase fw-bold">Administração</small></div>
-            <a href="{{ url_for('main.listar_usuarios') }}" class="list-group-item list-group-item-action p-3 {% if 'usuarios' in request.endpoint %}active{% endif %}"><i class="bi bi-people-fill me-2"></i> Usuários</a>
+            <hr class="my-2">
+            <h6 class="text-muted fw-bold text-uppercase px-3 mt-2 mb-1 fs-7">Administração</h6>
+            <a href="{{ url_for('main.listar_usuarios') }}" class="list-group-item list-group-item-action p-3 {% if 'listar_usuarios' in request.endpoint %}active{% endif %}"><i class="bi bi-people-fill me-2"></i> Usuários</a>
             {% endif %}
         </div>
         <div class="dropdown border-top p-3">
@@ -31,6 +32,7 @@
             </ul>
         </div>
     </div>
+
     <div id="page-content-wrapper">
         <nav class="navbar navbar-expand-lg border-bottom d-lg-none">
             <div class="container-fluid">
