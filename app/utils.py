@@ -11,8 +11,13 @@ def format_currency(value):
     return locale.currency(float(value), grouping=True, symbol='R$')
 
 def parse_currency(value_str):
-    if not isinstance(value_str, str): return float(value_str)
+    """Converte uma string de moeda para float, lidando com valores vazios."""
+    if not isinstance(value_str, str) or not value_str:
+        return 0.0
+    # Limpa a string de formatação de moeda
     cleaned_value = value_str.replace('R$', '').strip().replace('.', '').replace(',', '.')
+    if not cleaned_value:
+        return 0.0
     return float(cleaned_value)
 
 def expandir_transacoes_na_janela(regras, data_inicio_janela, data_fim_janela):
@@ -48,27 +53,14 @@ def expandir_transacoes_na_janela(regras, data_inicio_janela, data_fim_janela):
     return transacoes_na_janela
 
 def calcular_resumo_financeiro(lista_transacoes):
-    """Recebe uma lista de transações e retorna um dicionário com os totais, ignorando as puladas."""
     transacoes_validas = [t for t in lista_transacoes if not t.get('is_skipped')]
-    
     total_receitas = sum(t['valor'] for t in transacoes_validas if t['tipo'] == 'Receita')
     total_despesas = sum(t['valor'] for t in transacoes_validas if t['tipo'] == 'Despesa')
-    
-    # CORREÇÃO: Inicializa os dicionários antes do loop para garantir que sempre existam.
-    receitas_por_cat = {}
-    despesas_por_cat = {}
-
+    receitas_por_cat = {}; despesas_por_cat = {}
     for t in transacoes_validas:
         cat_nome = t.get('categoria_nome', 'Sem Categoria')
         if t['tipo'] == 'Receita':
             receitas_por_cat[cat_nome] = receitas_por_cat.get(cat_nome, 0) + t['valor']
-        else: # Despesa
+        else:
             despesas_por_cat[cat_nome] = despesas_por_cat.get(cat_nome, 0) + t['valor']
-
-    return {
-        "total_receitas": total_receitas,
-        "total_despesas": total_despesas,
-        "saldo": total_receitas - total_despesas,
-        "receitas_por_categoria": receitas_por_cat,
-        "despesas_por_categoria": despesas_por_cat
-    }
+    return {"total_receitas": total_receitas, "total_despesas": total_despesas, "saldo": total_receitas - total_despesas, "receitas_por_categoria": receitas_por_cat, "despesas_por_categoria": despesas_por_cat}

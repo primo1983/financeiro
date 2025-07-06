@@ -4,25 +4,47 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!transactionModalEl) return;
     const modal = new bootstrap.Modal(transactionModalEl);
     const form = document.getElementById('transactionForm');
+
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(form);
         const actionUrl = form.getAttribute('action');
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        fetch(actionUrl, { method: 'POST', body: formData, headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }})
+        
+        fetch(actionUrl, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }
+        })
         .then(response => response.json().then(data => ({ ok: response.ok, body: data })))
         .then(({ ok, body }) => {
             form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            
             if (ok && body.success) {
                 window.location.href = body.redirect_url;
             } else {
+                // --- MUDANÇA PARA DEBUG ---
+                console.log("Recebidos erros de validação:", body.errors);
                 for (const fieldName in body.errors) {
+                    console.log(`Procurando por campo com o seletor: [name="${fieldName}"]`);
                     const field = form.querySelector(`[name="${fieldName}"]`);
-                    if (field) { field.classList.add('is-invalid'); }
+                    console.log("Elemento HTML encontrado:", field); // Isso nos dirá se o campo foi encontrado ou é nulo
+
+                    if (field) {
+                        console.log("Adicionando classe 'is-invalid' ao campo:", field);
+                        field.classList.add('is-invalid');
+                    } else {
+                        console.log(`ERRO: Não foi possível encontrar o campo [name="${fieldName}"] no formulário.`);
+                    }
                 }
             }
-        }).catch(error => console.error('Erro:', error));
+        }).catch(error => {
+            console.error('Erro de Fetch:', error);
+            alert('Ocorreu um erro de comunicação com o servidor. Verifique o console para mais detalhes.');
+        });
     });
+
+    // O resto do script...
     const modalLabel = document.getElementById('modalLabel');
     const submitButton = document.getElementById('modalSubmitBtn');
     const valorInput = document.getElementById('valor');
@@ -106,11 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const csrf_token = document.querySelector('meta[name="csrf-token"]').content;
             const nomeInput = document.getElementById('quick_cat_nome');
             const tipoInput = document.getElementById('quick_cat_tipo');
-            fetch("{{ url_for('main.adicionar_categoria_ajax') }}", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf_token },
-                body: JSON.stringify({ nome: nomeInput.value, tipo: tipoInput.value })
-            })
+            fetch("{{ url_for('main.adicionar_categoria_ajax') }}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf_token }, body: JSON.stringify({ nome: nomeInput.value, tipo: tipoInput.value }) })
             .then(response => response.json())
             .then(data => {
                 nomeInput.classList.remove('is-invalid');
