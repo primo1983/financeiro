@@ -25,7 +25,12 @@
                 <div class="list-group-item">
                     <div class="row w-100 align-items-center">
                         <div class="col-12 col-md-6">
-                            <div class="fw-bold">{{ transacao.descricao }}</div>
+                            <div class="fw-bold">
+                                {{ transacao.descricao }}
+                                {% if transacao.recorrencia and not transacao.is_rule and not transacao.is_skipped %}
+                                    <i class="bi bi-arrow-repeat text-muted ms-2" title="Ocorrência de uma recorrência"></i>
+                                {% endif %}
+                            </div>
                             <small class="text-muted d-md-none">{{ transacao.data.strftime('%d/%m/%Y') }}</small>
                         </div>
                         <div class="col-md-3 text-center d-none d-md-block">
@@ -47,24 +52,25 @@
     </div>
 
     <div class="col-lg-5">
-        <div class="card shadow-sm mb-4">
+        <div class="card text-white bg-primary shadow-sm mb-4">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <h6 class="card-subtitle mb-1">Saldo Atual (Total)</h6>
                         <h4 id="saldo-atual-valor" class="fw-bold mb-0">{% if mostrar_saldos %}{{ saldo_atual|currency }}{% else %}R$ ••••••{% endif %}</h4>
                     </div>
-                    <button id="toggle-saldo-btn" class="btn btn-sm btn-link text-body-emphasis p-0" title="Alternar visibilidade do saldo">
+                    <button id="toggle-saldo-btn" class="btn btn-sm btn-link text-white p-0" title="Alternar visibilidade do saldo">
                         <i class="bi {% if mostrar_saldos %}bi-eye-slash{% else %}bi-eye{% endif %} fs-5"></i>
                     </button>
                 </div>
             </div>
         </div>
+        
         <div class="row g-4">
             <div class="col-12">
-                <div class="card bg-light border-2 shadow-sm">
+                <div class="card bg-info text-white shadow-sm">
                     <div class="card-body text-center">
-                        <h6 class="card-subtitle text-muted mb-2">Saldo Previsto do Mês</h6>
+                        <h6 class="card-subtitle mb-2">Saldo Previsto do Mês</h6>
                         <h4 class="fw-bold mb-0">{{ saldo_previsto|currency }}</h4>
                     </div>
                 </div>
@@ -88,8 +94,22 @@
         </div>
         
         <div class="card shadow-sm mt-4">
-            <div class="card-header"><i class="bi bi-bar-chart-line-fill me-2"></i>Receitas vs. Despesas (Últimos 3 Meses)</div>
-            <div class="card-body"><canvas id="barChart" style="min-height: 250px;"></canvas></div>
+            <div class="card-header"><i class="bi bi-cash-stack me-2"></i>Receitas Previstas do Mês</div>
+            <div class="list-group list-group-flush">
+                {% for receita in receitas_previstas_lista %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        {% if receita.recorrencia and not receita.is_rule %}
+                            <i class="bi bi-arrow-repeat text-muted me-2" title="Ocorrência de uma recorrência"></i>
+                        {% endif %}
+                        {{ receita.descricao }}
+                    </span>
+                    <span class="fw-bold text-success">{{ receita.valor|currency }}</span>
+                </div>
+                {% else %}
+                <div class="list-group-item text-center text-muted p-3">Nenhuma receita prevista para este mês.</div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
@@ -106,14 +126,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             fetch("{{ url_for('main.toggle_saldo_visibility') }}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
             .then(response => { if (response.ok) { window.location.reload(); } else { alert('Ocorreu um erro.'); } });
-        });
-    }
-    const barCanvas = document.getElementById('barChart');
-    if(barCanvas) {
-        new Chart(barCanvas.getContext('2d'), { 
-            type: 'bar', 
-            data: { labels: {{ bar_chart_labels|tojson }}, datasets: [ { label: 'Receitas', data: {{ bar_chart_receitas|tojson }}, backgroundColor: 'rgba(25, 135, 84, 0.7)' }, { label: 'Despesas', data: {{ bar_chart_despesas|tojson }}, backgroundColor: 'rgba(220, 53, 69, 0.7)' } ] }, 
-            options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } } 
         });
     }
 });

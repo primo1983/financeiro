@@ -23,27 +23,24 @@
                         {% for error in form.email.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     
+                    <div class="mb-4">
+                        {{ form.senha_atual.label(class="form-label fw-bold") }}
+                        {{ form.senha_atual(class="form-control " + ('is-invalid' if form.senha_atual.errors else ''), placeholder="Senha obrigatória para salvar") }}
+                        <div class="form-text">Para salvar qualquer alteração, confirme com sua senha atual.</div>
+                    </div>
+
                     <hr class="my-4">
-                    
+
                     <h6 class="text-muted">Alterar Senha (Opcional)</h6>
-                    <div class="form-text mb-2">Para criar uma nova senha, preencha os dois campos abaixo.</div>
                     <div class="mb-3">
                         {{ form.nova_senha.label(class="form-label") }}
-                        {{ form.nova_senha(class="form-control " + ('is-invalid' if form.nova_senha.errors else '')) }}
+                        {{ form.nova_senha(class="form-control " + ('is-invalid' if form.nova_senha.errors else ''), placeholder="Deixe em branco para não alterar") }}
                         {% for error in form.nova_senha.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
                     </div>
                     <div class="mb-3">
                         {{ form.confirmar_senha.label(class="form-label") }}
                         {{ form.confirmar_senha(class="form-control " + ('is-invalid' if form.confirmar_senha.errors else '')) }}
                         {% for error in form.confirmar_senha.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-                    </div>
-
-                    <hr class="my-4">
-
-                    <h6 class="fw-bold">Confirmação Obrigatória</h6>
-                    <div class="mb-3">
-                        {{ form.senha_atual.label(class="form-label") }}
-                        {{ form.senha_atual(class="form-control " + ('is-invalid' if form.senha_atual.errors else ''), placeholder="Senha obrigatória para salvar") }}
                     </div>
 
                     <div class="mt-4">
@@ -53,52 +50,5 @@
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-5">
-        <div class="card shadow-sm">
-            <div class="card-header"><h5 class="mb-0">Aparência</h5></div>
-            <div class="card-body p-4">
-                 <form id="themeForm" novalidate>
-                    <h6 class="mb-3">Tema</h6>
-                    <div class="d-grid gap-2">
-                        {% for subfield in form.theme %}
-                        <input type="radio" class="btn-check" name="theme-options" id="theme-{{ subfield.data }}" value="{{ subfield.data }}" autocomplete="off" {% if subfield.data == form.theme.data %}checked{% endif %}>
-                        <label class="btn btn-outline-secondary d-flex align-items-center justify-content-center" for="theme-{{ subfield.data }}">
-                            {% if subfield.data == 'light' %}<i class="bi bi-sun-fill me-2"></i>
-                            {% elif subfield.data == 'dark' %}<i class="bi bi-moon-stars-fill me-2"></i>
-                            {% else %}<i class="bi bi-circle-half me-2"></i>
-                            {% endif %}
-                            {{ subfield.label.text }}
-                        </label>
-                        {% endfor %}
-                    </div>
-                    <div class="form-text text-center mt-3">Sua preferência de tema é salva automaticamente.</div>
-                 </form>
-            </div>
-        </div>
-    </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const themeRadios = document.querySelectorAll('.btn-check[name="theme-options"]');
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        themeRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                const newTheme = this.value;
-                document.documentElement.setAttribute('data-bs-theme', newTheme);
-                
-                fetch("{{ url_for('auth.salvar_tema') }}", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify({ theme: newTheme })
-                });
-            });
-        });
-    });
-</script>
 {% endblock %}

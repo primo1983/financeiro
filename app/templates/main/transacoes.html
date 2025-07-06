@@ -1,24 +1,47 @@
 {% extends 'layout_app.html' %}
 {% block title %}Transações{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0">Histórico de Transações</h3>
     <button type="button" id="openAddModalBtn" class="btn btn-primary"><i class="bi bi-plus-circle-fill me-2"></i> Adicionar Transação</button>
 </div>
+
 <div class="card shadow-sm">
-    <div class="card-header bg-body-tertiary"><nav class="d-flex justify-content-between align-items-center" aria-label="Navegação de meses"><a href="{{ url_for('main.listar_transacoes', ano=nav_mes_anterior.year, mes=nav_mes_anterior.month) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i></a><h5 class="mb-0 text-center">{{ nav_mes_display }}</h5><a href="{{ url_for('main.listar_transacoes', ano=nav_mes_seguinte.year, mes=nav_mes_seguinte.month) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i></a></nav></div>
+    <div class="card-header bg-body-tertiary">
+        <nav class="d-flex justify-content-between align-items-center" aria-label="Navegação de meses">
+            <a href="{{ url_for('main.listar_transacoes', ano=nav_mes_anterior.year, mes=nav_mes_anterior.month) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+            <h5 class="mb-0 text-center">{{ nav_mes_display }}</h5>
+            <a href="{{ url_for('main.listar_transacoes', ano=nav_mes_seguinte.year, mes=nav_mes_seguinte.month) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-right"></i></a>
+        </nav>
+    </div>
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-            <thead><tr><th style="width: 40%;">Descrição</th><th>Tipo</th><th>Valor</th><th>Categoria</th><th>Data</th><th class="text-end">Ações</th></tr></thead>
+            <thead>
+                <tr>
+                    <th style="width: 40%;">Descrição</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th>Categoria</th>
+                    <th>Data</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
             <tbody>
                 {% for transacao in transacoes %}
                 <tr class="{{ 'text-muted opacity-75 text-decoration-line-through bg-body-tertiary' if transacao.is_skipped else '' }}">
                     <td class="fw-bold">
-                        {% if transacao.recorrencia and not transacao.is_rule and not transacao.is_skipped %}<i class="bi bi-arrow-repeat text-muted me-2" title="Ocorrência de uma recorrência"></i>{% endif %}
                         {{ transacao.descricao }}
-                        {% if not transacao.is_skipped and transacao.is_rule and transacao.recorrencia %}<span class="badge bg-primary-subtle text-primary-emphasis rounded-pill ms-2" title="Esta é a regra original da recorrência"><i class="bi bi-star-fill"></i> Regra</span>{% endif %}
+                        {% if not transacao.is_skipped and transacao.recorrencia %}
+                            <span class="ms-2 text-primary-emphasis fw-normal" style="font-size: 0.85em;">
+                                <i class="bi bi-arrow-repeat"></i> ({{ transacao.recorrencia }})
+                            </span>
+                        {% endif %}
                     </td>
-                    <td>{% if transacao.tipo == 'Receita' %}<span class="badge rounded-pill text-bg-success">Receita</span>{% else %}<span class="badge rounded-pill text-bg-danger">Despesa</span>{% endif %}</td>
+                    <td>
+                        {% if transacao.tipo == 'Receita' %}<span class="badge rounded-pill text-bg-success">Receita</span>
+                        {% else %}<span class="badge rounded-pill text-bg-danger">Despesa</span>{% endif %}
+                    </td>
                     <td class="fw-bold {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</td>
                     <td>{{ transacao.categoria_nome }}</td>
                     <td>{{ transacao.data.strftime('%d/%m/%Y') }}</td>
@@ -44,4 +67,8 @@
 </div>
 {% include 'includes/modal_transacao.html' %}
 {% endblock %}
-{% block scripts %}{{ super() }}{% include 'includes/scripts_modal_transacao.html' %}{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% include 'includes/scripts_modal_transacao.html' %}
+{% endblock %}
