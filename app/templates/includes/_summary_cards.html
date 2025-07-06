@@ -1,0 +1,26 @@
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Receitas no Período</h6>
+                <h4 class="card-title">{{ total_receitas|currency }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Despesas no Período</h6>
+                <h4 class="card-title">{{ total_despesas|currency }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Saldo do Período</h6>
+                <h4 class="card-title">{{ saldo_periodo|currency }}</h4>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,9 +1,10 @@
 import locale
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
-from flask import current_app
+from flask import current_app, request
 from flask_login import current_user
-from app.models import ExcecaoTransacao
+from app.models import ExcecaoTransacao, Transacao, Categoria
+from app import db
 
 @current_app.template_filter('currency')
 def format_currency(value):
@@ -11,19 +12,13 @@ def format_currency(value):
     return locale.currency(float(value), grouping=True, symbol='R$')
 
 def parse_currency(value_str):
-    """Converte uma string de moeda para float, lidando com valores vazios."""
-    if not isinstance(value_str, str) or not value_str:
-        return 0.0
-    # Limpa a string de formatação de moeda
+    if not isinstance(value_str, str): return float(value_str)
     cleaned_value = value_str.replace('R$', '').strip().replace('.', '').replace(',', '.')
-    if not cleaned_value:
-        return 0.0
     return float(cleaned_value)
 
 def expandir_transacoes_na_janela(regras, data_inicio_janela, data_fim_janela):
     transacoes_na_janela = []
-    if not current_user.is_authenticated:
-        return []
+    if not current_user.is_authenticated: return []
     excecoes = ExcecaoTransacao.query.filter_by(user_id=current_user.id).all()
     excecoes_set = {(e.transacao_id, e.data_excecao) for e in excecoes}
 

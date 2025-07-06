@@ -6,6 +6,7 @@
     <h3 class="mb-0">Histórico de Transações</h3>
     <button type="button" id="openAddModalBtn" class="btn btn-primary"><i class="bi bi-plus-circle-fill me-2"></i> Adicionar Transação</button>
 </div>
+
 <div class="card shadow-sm">
     <div class="card-header bg-body-tertiary">
         <nav class="d-flex justify-content-between align-items-center" aria-label="Navegação de meses">
@@ -21,8 +22,8 @@
                     <th>Tipo</th>
                     <th>Categoria</th>
                     <th style="width: 35%;">Descrição</th>
-                    <th>Data</th>
                     <th>Valor</th>
+                    <th>Data</th>
                     <th class="text-end">Ações</th>
                 </tr>
             </thead>
@@ -34,24 +35,49 @@
                         {% else %}<span class="badge rounded-pill text-bg-danger">Despesa</span>{% endif %}
                     </td>
                     <td>{{ transacao.categoria_nome }}</td>
-                    <td>
-                        <div class="fw-bold">{{ transacao.descricao }}</div>
+                    <td class="fw-bold">
+                        {{ transacao.descricao }}
                         {% if not transacao.is_skipped and transacao.recorrencia %}
-                            <small class="text-primary-emphasis fw-normal"><i class="bi bi-arrow-repeat"></i> {{ transacao.recorrencia }}</small>
+                            <span class="ms-1 text-primary-emphasis fw-normal" style="font-size: 0.85em;" title="{{ transacao.recorrencia }}">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </span>
                         {% endif %}
                     </td>
-                    <td>{{ transacao.data.strftime('%d/%m/%Y') }}</td>
                     <td class="fw-bold {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</td>
+                    <td>{{ transacao.data.strftime('%d/%m/%Y') }}</td>
                     <td class="text-end">
                         {% if transacao.is_skipped %}
-                            <form action="{{ url_for('main.reativar_ocorrencia') }}" method="post" class="d-inline" onsubmit="return confirm('Deseja reativar esta ocorrência?');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/><input type="hidden" name="transacao_id" value="{{ transacao.id }}"><input type="hidden" name="data_excecao" value="{{ transacao.data.strftime('%Y-%m-%d') }}"><button type="submit" class="btn btn-sm btn-outline-success" title="Reativar esta ocorrência"><i class="bi bi-calendar-check"></i></button></form>
-                        {% elif transacao.recorrencia %}
-                            <button type="button" class="btn btn-sm btn-outline-warning edit-btn" title="Editar Regra" data-id="{{ transacao.id }}" data-tipo="{{ transacao.tipo }}" data-valor="{{ transacao.valor }}" data-categoria-id="{{ transacao.categoria_id }}" data-data="{{ transacao.data.strftime('%Y-%m-%d') }}" data-descricao="{{ transacao.descricao }}" data-forma-pagamento="{{ transacao.forma_pagamento or '' }}" data-recorrencia="{{ transacao.recorrencia or '' }}" data-data-final="{{ transacao.data_final_recorrencia.strftime('%Y-%m-%d') if transacao.data_final_recorrencia else '' }}"><i class="bi bi-pencil-square"></i></button>
-                            <form action="{{ url_for('main.excluir_transacao', id=transacao.id) }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza? Isso irá apagar a regra e TODAS as suas ocorrências futuras.');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/><button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Regra de Recorrência"><i class="bi bi-trash3"></i></button></form>
-                            <form action="{{ url_for('main.ignorar_ocorrencia') }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja ignorar apenas a ocorrência deste mês?');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/><input type="hidden" name="transacao_id" value="{{ transacao.id }}"><input type="hidden" name="data_excecao" value="{{ transacao.data.strftime('%Y-%m-%d') }}"><button type="submit" class="btn btn-sm btn-outline-secondary" title="Ignorar esta ocorrência"><i class="bi bi-calendar-x"></i></button></form>
+                            <form action="{{ url_for('main.reativar_ocorrencia') }}" method="post" class="d-inline" onsubmit="return confirm('Deseja reativar esta ocorrência?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input type="hidden" name="transacao_id" value="{{ transacao.id }}">
+                                <input type="hidden" name="data_excecao" value="{{ transacao.data.strftime('%Y-%m-%d') }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Reativar esta ocorrência"><i class="bi bi-calendar-check"></i></button>
+                            </form>
                         {% else %}
-                            <button type="button" class="btn btn-sm btn-outline-warning edit-btn" title="Editar Transação" data-id="{{ transacao.id }}" data-tipo="{{ transacao.tipo }}" data-valor="{{ transacao.valor }}" data-categoria-id="{{ transacao.categoria_id }}" data-data="{{ transacao.data.strftime('%Y-%m-%d') }}" data-descricao="{{ transacao.descricao }}" data-forma-pagamento="{{ transacao.forma_pagamento or '' }}"><i class="bi bi-pencil-square"></i></button>
-                            <form action="{{ url_for('main.excluir_transacao', id=transacao.id) }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza?');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/><button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash3"></i></button></form>
+                            <button type="button" class="btn btn-sm btn-outline-warning edit-btn" title="Editar"
+                                    data-id="{{ transacao.id }}" data-tipo="{{ transacao.tipo }}" data-valor="{{ transacao.valor }}"
+                                    data-categoria-id="{{ transacao.categoria_id }}" data-data="{{ transacao.data.strftime('%Y-%m-%d') }}"
+                                    data-descricao="{{ transacao.descricao }}" data-forma-pagamento="{{ transacao.forma_pagamento or '' }}"
+                                    data-recorrencia="{{ transacao.recorrencia or '' }}" data-data-final="{{ transacao.data_final_recorrencia.strftime('%Y-%m-%d') if transacao.data_final_recorrencia else '' }}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            {% if transacao.recorrencia %}
+                                <form action="{{ url_for('main.excluir_transacao', id=transacao.id) }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza? Isso irá apagar a regra e TODAS as suas ocorrências futuras.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Regra de Recorrência"><i class="bi bi-trash3"></i></button>
+                                </form>
+                                <form action="{{ url_for('main.ignorar_ocorrencia') }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja ignorar apenas a ocorrência deste mês?');">
+                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                     <input type="hidden" name="transacao_id" value="{{ transacao.id }}">
+                                     <input type="hidden" name="data_excecao" value="{{ transacao.data.strftime('%Y-%m-%d') }}">
+                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="Ignorar esta ocorrência"><i class="bi bi-calendar-x"></i></button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('main.excluir_transacao', id=transacao.id) }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash3"></i></button>
+                                </form>
+                            {% endif %}
                         {% endif %}
                     </td>
                 </tr>
@@ -65,4 +91,7 @@
 {% include 'includes/modal_transacao.html' %}
 {% endblock %}
 
-{% block scripts %}{{ super() }}{% include 'includes/scripts_modal_transacao.html' %}{% endblock %}
+{% block scripts %}
+{{ super() }}
+{% include 'includes/scripts_modal_transacao.html' %}
+{% endblock %}
