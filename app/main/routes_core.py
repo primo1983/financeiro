@@ -18,31 +18,35 @@ def index():
     
     regras_transacoes = Transacao.query.filter_by(user_id=user_id).options(db.joinedload(Transacao.categoria)).all()
     
-    # Cálculos para os cards
+    # Calcula o Saldo Atual (Total)
     transacoes_ate_hoje = expandir_transacoes_na_janela(regras_transacoes, date(2000, 1, 1), hoje)
     resumo_total = calcular_resumo_financeiro(transacoes_ate_hoje)
+    saldo_atual = resumo_total['saldo']
     
+    # Calcula os totais para os cards do Mês Atual
     inicio_mes_atual = hoje.replace(day=1)
     fim_mes_atual = inicio_mes_atual + relativedelta(months=1) - relativedelta(days=1)
     transacoes_mes_atual = expandir_transacoes_na_janela(regras_transacoes, inicio_mes_atual, fim_mes_atual)
-    resumo_mensal = calcular_resumo_financeiro(transacoes_mes_atual)
+    resumo_mensal_realizado = calcular_resumo_financeiro(transacoes_mes_atual)
     
-    # Cálculo para o Saldo Previsto (considera tudo, mesmo pulados)
+    # CORREÇÃO: Calcula o Saldo Previsto (considera tudo, mesmo o que foi pulado)
     receitas_previstas_total = sum(t['valor'] for t in transacoes_mes_atual if t['tipo'] == 'Receita')
     despesas_previstas_total = sum(t['valor'] for t in transacoes_mes_atual if t['tipo'] == 'Despesa')
     saldo_previsto = receitas_previstas_total - despesas_previstas_total
 
-    # Prepara a lista de receitas previstas para o novo card
+    # Prepara a lista de receitas previstas para o card
     receitas_previstas_lista = [t for t in transacoes_mes_atual if t['tipo'] == 'Receita' and not t.get('is_skipped')]
         
     transacoes_ate_hoje.sort(key=lambda x: (x['data'], x['id'] if isinstance(x['id'], int) else -1), reverse=True)
 
-    return render_template('main/index.html', form=form, user_categories=user_categories, 
-        saldo_atual=resumo_total['saldo'], 
-        receita_mes=resumo_mensal['total_receitas'], 
-        despesa_mes=resumo_mensal['total_despesas'], 
-        saldo_mes=resumo_mensal['saldo'],
-        saldo_previsto=saldo_previsto,
+    return render_template('main/index.html', 
+        form=form, 
+        user_categories=user_categories, 
+        saldo_atual=saldo_atual, 
+        receita_mes=resumo_mensal_realizado['total_receitas'], 
+        despesa_mes=resumo_mensal_realizado['total_despesas'], 
+        saldo_mes=resumo_mensal_realizado['saldo'],
+        saldo_previsto=saldo_previsto, # Passando a variável que faltava
         ultimas_10_transacoes=transacoes_ate_hoje[:10],
         receitas_previstas_lista=receitas_previstas_lista,
         mostrar_saldos=current_user.mostrar_saldos

@@ -14,17 +14,31 @@
                 <h5 class="mb-0"><i class="bi bi-list-ol me-2"></i>Últimas 10 Transações</h5>
             </div>
             <div class="list-group list-group-flush">
+                <div class="list-group-item d-none d-md-flex">
+                    <div class="row w-100 align-items-center">
+                        <div class="col-md-7"><small class="text-muted fw-bold">DESCRIÇÃO</small></div>
+                        <div class="col-md-2 text-center"><small class="text-muted fw-bold">DATA</small></div>
+                        <div class="col-md-3 text-end"><small class="text-muted fw-bold">VALOR</small></div>
+                    </div>
+                </div>
                 {% for transacao in ultimas_10_transacoes %}
                 <div class="list-group-item">
                     <div class="row w-100 align-items-center gx-2">
-                        <div class="col-12 col-sm-5">
-                            <div class="fw-bold text-truncate">{{ transacao.descricao }}</div>
-                            <small class="text-muted d-sm-none">{{ transacao.data.strftime('%d/%m/%Y') }}</small>
+                        <div class="col-12 col-md-7">
+                            <div class="fw-bold text-truncate">
+                                {{ transacao.descricao }}
+                                {% if not transacao.is_skipped and transacao.recorrencia %}
+                                    <span class="ms-2" title="Transação Recorrente ({{ transacao.recorrencia }})">
+                                        <i class="bi bi-arrow-repeat text-muted"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted d-md-none">{{ transacao.data.strftime('%d/%m/%Y') }}</small>
                         </div>
-                        <div class="col-sm-4 text-sm-center">
+                        <div class="col-md-2 text-center d-none d-md-block">
                             <span class="text-muted">{{ transacao.data.strftime('%d/%m/%Y') }}</span>
                         </div>
-                        <div class="col-sm-3 text-sm-end">
+                        <div class="col-md-3 text-end">
                             <span class="fw-bold fs-6 {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</span>
                         </div>
                     </div>

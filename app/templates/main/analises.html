@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4"><h3 class="mb-0">Análise por Período</h3></div>
+
 <div class="card shadow-sm mb-4">
     <div class="card-header"><i class="bi bi-funnel-fill me-2"></i>Filtros</div>
     <div class="card-body">
@@ -15,12 +16,35 @@
         </form>
     </div>
 </div>
-{% include 'includes/_summary_cards.html' %}
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4"><div class="card text-white bg-success"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Receitas no Período</h6><h4 class="card-title">{{ total_receitas|currency }}</h4></div></div></div>
+    <div class="col-md-4"><div class="card text-white bg-danger"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Despesas no Período</h6><h4 class="card-title">{{ total_despesas|currency }}</h4></div></div></div>
+    <div class="col-md-4"><div class="card text-white bg-primary"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Saldo do Período</h6><h4 class="card-title">{{ saldo_periodo|currency }}</h4></div></div></div>
+</div>
+
 <div class="row g-4">
-    <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Despesas por Categoria</div><div class="card-body"><canvas id="graficoDespesas"></canvas>{% if not grafico_despesas_valores %}<p class="text-center text-muted mt-3">Nenhuma despesa para exibir.</p>{% endif %}</div></div></div>
-    <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Receitas por Categoria</div><div class="card-body"><canvas id="graficoReceitas"></canvas>{% if not grafico_receitas_valores %}<p class="text-center text-muted mt-3">Nenhuma receita para exibir.</p>{% endif %}</div></div></div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Despesas por Categoria</div>
+            <div class="card-body">
+                <canvas id="graficoDespesas"></canvas>
+                {% if not grafico_despesas_valores %}<p class="text-center text-muted mt-3">Nenhuma despesa para exibir no período.</p>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Receitas por Categoria</div>
+            <div class="card-body">
+                <canvas id="graficoReceitas"></canvas>
+                 {% if not grafico_receitas_valores %}<p class="text-center text-muted mt-3">Nenhuma receita para exibir no período.</p>{% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
+
 
 {% block scripts %}
 {{ super() }}
@@ -35,16 +59,18 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = `/analises/${ano}/${mes}`;
         });
     }
-    const chartColors = ['#0d6efd', '#6f42c1', '#198754', '#dc3545', '#ffc107', '#0dcaf0'];
+
+    const chartColors = ['#0d6efd', '#6f42c1', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#d63384', '#fd7e14', '#20c997', '#6c757d'];
     const despesasPieCanvas = document.getElementById('graficoDespesas');
     const despesasValores = {{ grafico_despesas_valores|tojson }};
     if (despesasPieCanvas && despesasValores.length > 0) {
-        new Chart(despesasPieCanvas, { type: 'pie', data: { labels: {{ grafico_despesas_labels|tojson }}, datasets: [{ data: despesasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+        new Chart(despesasPieCanvas.getContext('2d'), { type: 'pie', data: { labels: {{ grafico_despesas_labels|tojson }}, datasets: [{ data: despesasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
     }
+    
     const receitasPieCanvas = document.getElementById('graficoReceitas');
     const receitasValores = {{ grafico_receitas_valores|tojson }};
     if (receitasPieCanvas && receitasValores.length > 0) {
-        new Chart(receitasPieCanvas, { type: 'pie', data: { labels: {{ grafico_receitas_labels|tojson }}, datasets: [{ data: receitasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+        new Chart(receitasPieCanvas.getContext('2d'), { type: 'pie', data: { labels: {{ grafico_receitas_labels|tojson }}, datasets: [{ data: receitasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
     }
 });
 </script>
