@@ -10,7 +10,7 @@
         <form id="filterForm" method="GET" action="">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3"><label for="ano" class="form-label">Ano</label><select name="ano" id="ano" class="form-select">{% for i in range(2023, 2031) %}<option value="{{ i }}" {% if i == ano_selecionado %}selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
-                <div class="col-md-3"><label for="mes" class="form-label">Mês</label><select name="mes" id="mes" class="form-select"><option value="0" {% if mes_selecionado == 0 %}selected{% endif %}>Ano Inteiro</option>{% for i in range(1, 13) %}<option value="{{ i }}" {% if i == mes_selecionado %}selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
+                <div class="col-md-3"><label for="mes" class="form-label">Mês</label><select name="mes" id="mes" class="form-select"><option value="0" {% if not mes_selecionado or mes_selecionado == 0 %}selected{% endif %}>Ano Inteiro</option>{% for i in range(1, 13) %}<option value="{{ i }}" {% if i == mes_selecionado %}selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
                 <div class="col-md-6 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-2"></i>Filtrar Período</button></div>
             </div>
         </form>
@@ -18,9 +18,63 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-md-4"><div class="card text-white bg-success"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Receitas no Período</h6><h4 class="card-title">{{ total_receitas|currency }}</h4></div></div></div>
-    <div class="col-md-4"><div class="card text-white bg-danger"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Despesas no Período</h6><h4 class="card-title">{{ total_despesas|currency }}</h4></div></div></div>
-    <div class="col-md-4"><div class="card text-white bg-primary"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Saldo do Período</h6><h4 class="card-title">{{ saldo_periodo|currency }}</h4></div></div></div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Receitas no Período</h6>
+                <h4 class="card-title fw-bold mb-0">{{ total_receitas|currency }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-danger h-100">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Despesas no Período</h6>
+                <h4 class="card-title fw-bold mb-0">{{ total_despesas|currency }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2">Saldo do Período</h6>
+                <h4 class="card-title fw-bold mb-0">{{ saldo_periodo|currency }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header"><i class="bi bi-table me-2"></i>Transações do Período</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Categoria</th>
+                    <th style="width: 40%;">Descrição</th>
+                    <th class="text-end">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transacao in transacoes %}
+                <tr>
+                    <td>{{ transacao.data.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        {% if transacao.tipo == 'Receita' %}<span class="badge rounded-pill text-bg-success">Receita</span>
+                        {% else %}<span class="badge rounded-pill text-bg-danger">Despesa</span>{% endif %}
+                    </td>
+                    <td>{{ transacao.categoria_nome }}</td>
+                    <td>{{ transacao.descricao }}</td>
+                    <td class="text-end fw-bold {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted p-4">Nenhuma transação encontrada para os filtros selecionados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="row g-4">
@@ -29,7 +83,7 @@
             <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Despesas por Categoria</div>
             <div class="card-body">
                 <canvas id="graficoDespesas"></canvas>
-                {% if not grafico_despesas_valores %}<p class="text-center text-muted mt-3">Nenhuma despesa para exibir no período.</p>{% endif %}
+                {% if not grafico_despesas_valores %}<p class="text-center text-muted mt-3">Nenhuma despesa para exibir.</p>{% endif %}
             </div>
         </div>
     </div>
@@ -38,7 +92,7 @@
             <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Receitas por Categoria</div>
             <div class="card-body">
                 <canvas id="graficoReceitas"></canvas>
-                 {% if not grafico_receitas_valores %}<p class="text-center text-muted mt-3">Nenhuma receita para exibir no período.</p>{% endif %}
+                 {% if not grafico_receitas_valores %}<p class="text-center text-muted mt-3">Nenhuma receita para exibir.</p>{% endif %}
             </div>
         </div>
     </div>
@@ -48,30 +102,5 @@
 
 {% block scripts %}
 {{ super() }}
-<script defer>
-document.addEventListener('DOMContentLoaded', function () {
-    const filterForm = document.getElementById('filterForm');
-    if (filterForm) {
-        filterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const ano = document.getElementById('ano').value;
-            const mes = document.getElementById('mes').value;
-            window.location.href = `/analises/${ano}/${mes}`;
-        });
-    }
-
-    const chartColors = ['#0d6efd', '#6f42c1', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#d63384', '#fd7e14', '#20c997', '#6c757d'];
-    const despesasPieCanvas = document.getElementById('graficoDespesas');
-    const despesasValores = {{ grafico_despesas_valores|tojson }};
-    if (despesasPieCanvas && despesasValores.length > 0) {
-        new Chart(despesasPieCanvas.getContext('2d'), { type: 'pie', data: { labels: {{ grafico_despesas_labels|tojson }}, datasets: [{ data: despesasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
-    }
-    
-    const receitasPieCanvas = document.getElementById('graficoReceitas');
-    const receitasValores = {{ grafico_receitas_valores|tojson }};
-    if (receitasPieCanvas && receitasValores.length > 0) {
-        new Chart(receitasPieCanvas.getContext('2d'), { type: 'pie', data: { labels: {{ grafico_receitas_labels|tojson }}, datasets: [{ data: receitasValores, backgroundColor: chartColors }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
-    }
-});
-</script>
+<script src="{{ url_for('static', filename='js/analises.js') }}" defer></script>
 {% endblock %}

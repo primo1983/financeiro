@@ -9,17 +9,22 @@ from dateutil.relativedelta import relativedelta
 import io, csv
 
 def get_transacoes_filtradas_analise(user_id, data_inicio, data_fim):
-    """Função auxiliar para buscar e filtrar transações para a página de análises."""
+    """Função auxiliar para buscar e filtrar transações para um período específico."""
     tipo_filtro = request.args.get('tipo', 'Todos')
     categorias_filtro_ids_str = request.args.getlist('categoria')
+
     regras_transacoes = Transacao.query.filter_by(user_id=user_id).options(db.joinedload(Transacao.categoria)).all()
     transacoes_no_periodo = expandir_transacoes_na_janela(regras_transacoes, data_inicio, data_fim)
+    
     transacoes_filtradas = [t for t in transacoes_no_periodo if not t.get('is_skipped')]
+    
     if tipo_filtro in ['Receita', 'Despesa']:
         transacoes_filtradas = [t for t in transacoes_filtradas if t['tipo'] == tipo_filtro]
+    
     categorias_filtro_ids = [int(id) for id in categorias_filtro_ids_str] if categorias_filtro_ids_str else []
     if categorias_filtro_ids:
         transacoes_filtradas = [t for t in transacoes_filtradas if t['categoria_id'] in categorias_filtro_ids]
+
     return transacoes_filtradas, tipo_filtro, categorias_filtro_ids
 
 @main_bp.route('/analises')
@@ -33,23 +38,25 @@ def analises_redirect():
 @login_required
 def analises(ano, mes):
     user_id = current_user.id
-    data_inicio = date(ano, mes, 1)
-    data_fim = data_inicio + relativedelta(months=1) - relativedelta(days=1)
+    if mes == 0:
+        data_inicio = date(ano, 1, 1); data_fim = date(ano, 12, 31)
+    else:
+        data_inicio = date(ano, mes, 1); data_fim = data_inicio + relativedelta(months=1) - relativedelta(days=1)
     
     transacoes_filtradas, tipo_filtro, categorias_filtro_ids = get_transacoes_filtradas_analise(user_id, data_inicio, data_fim)
     resumo_periodo = calcular_resumo_financeiro(transacoes_filtradas)
     todas_as_categorias_usuario = Categoria.query.filter_by(user_id=user_id).order_by(Categoria.nome).all()
 
+    # Ordena a lista para exibição na tabela
+    transacoes_filtradas.sort(key=lambda x: x['data'], reverse=True)
+
     return render_template('main/analises.html', 
-        data_inicio=data_inicio.strftime('%Y-%m-%d'), 
-        data_fim=data_fim.strftime('%Y-%m-%d'),
-        ano_selecionado=ano, 
-        mes_selecionado=mes,
-        tipo_filtro=tipo_filtro, 
-        categorias_filtro_ids=categorias_filtro_ids,
+        transacoes=transacoes_filtradas, # Passando a lista de transações
+        data_inicio=data_inicio.strftime('%Y-%m-%d'), data_fim=data_fim.strftime('%Y-%m-%d'),
+        ano_selecionado=ano, mes_selecionado=mes,
+        tipo_filtro=tipo_filtro, categorias_filtro_ids=categorias_filtro_ids,
         todas_as_categorias_usuario=todas_as_categorias_usuario,
-        total_receitas=resumo_periodo['total_receitas'], 
-        total_despesas=resumo_periodo['total_despesas'],
+        total_receitas=resumo_periodo['total_receitas'], total_despesas=resumo_periodo['total_despesas'],
         saldo_periodo=resumo_periodo['saldo'],
         grafico_despesas_labels=list(resumo_periodo['despesas_por_categoria'].keys()), 
         grafico_despesas_valores=[float(v) for v in resumo_periodo['despesas_por_categoria'].values()],
@@ -67,11 +74,16 @@ def exportar_csv():
         data_fim = datetime.strptime(end_str, '%Y-%m-%d').date()
     except:
         hoje = date.today()
-        data_inicio = hoje.replace(day=1); data_fim = data_inicio + relativedelta(months=1) - relativedelta(days=1)
+        data_inicio = hoje.replace(day=1)
+        data_fim = data_inicio + relativedelta(months=1) - relativedelta(days=1)
+
     transacoes_filtradas, _, _ = get_transacoes_filtradas_analise(user_id, data_inicio, data_fim)
+    
     output = io.StringIO(); writer = csv.writer(output, delimiter=';')
     writer.writerow(['Data', 'Descrição', 'Valor', 'Tipo', 'Categoria', 'Forma de Pagamento'])
     for t in sorted(transacoes_filtradas, key=lambda x: x['data']):
-        valor_formatado = f"{t['valor']:.2f}".replace('.', ','); writer.writerow([t['data'].strftime('%d/%m/%Y'), t['descricao'], valor_formatado, t['tipo'], t['categoria_nome'], t.get('forma_pagamento', '')])
-    output.seek(0); filename = f"relatorio_{data_inicio.strftime('%Y-%m-%d')}_a_{data_fim.strftime('%Y-%m-%d')}.csv"
+        valor_formatado = f"{t['valor']:.2f}".replace('.', ',')
+        writer.writerow([t['data'].strftime('%d/%m/%Y'), t['descricao'], valor_formatado, t['tipo'], t['categoria_nome'], t.get('forma_pagamento', '')])
+    output.seek(0)
+    filename = f"relatorio_{data_inicio.strftime('%Y-%m-%d')}_a_{data_fim.strftime('%Y-%m-%d')}.csv"
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": f"attachment;filename={filename}"})

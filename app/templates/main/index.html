@@ -14,17 +14,10 @@
                 <h5 class="mb-0"><i class="bi bi-list-ol me-2"></i>Últimas 10 Transações</h5>
             </div>
             <div class="list-group list-group-flush">
-                <div class="list-group-item d-none d-md-flex">
-                    <div class="row w-100 align-items-center">
-                        <div class="col-md-7"><small class="text-muted fw-bold">DESCRIÇÃO</small></div>
-                        <div class="col-md-2 text-center"><small class="text-muted fw-bold">DATA</small></div>
-                        <div class="col-md-3 text-end"><small class="text-muted fw-bold">VALOR</small></div>
-                    </div>
-                </div>
                 {% for transacao in ultimas_10_transacoes %}
                 <div class="list-group-item">
                     <div class="row w-100 align-items-center gx-2">
-                        <div class="col-12 col-md-7">
+                        <div class="col-12 col-sm-6">
                             <div class="fw-bold text-truncate">
                                 {{ transacao.descricao }}
                                 {% if not transacao.is_skipped and transacao.recorrencia %}
@@ -33,12 +26,12 @@
                                     </span>
                                 {% endif %}
                             </div>
-                            <small class="text-muted d-md-none">{{ transacao.data.strftime('%d/%m/%Y') }}</small>
+                            <small class="text-muted d-sm-none">{{ transacao.data.strftime('%d/%m/%Y') }}</small>
                         </div>
-                        <div class="col-md-2 text-center d-none d-md-block">
+                        <div class="col-sm-3 text-sm-center">
                             <span class="text-muted">{{ transacao.data.strftime('%d/%m/%Y') }}</span>
                         </div>
-                        <div class="col-md-3 text-end">
+                        <div class="col-sm-3 text-sm-end">
                             <span class="fw-bold fs-6 {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</span>
                         </div>
                     </div>
@@ -47,7 +40,7 @@
                 <div class="list-group-item text-center text-muted p-4">Nenhuma transação encontrada.</div>
                 {% endfor %}
             </div>
-             <div class="card-footer text-center bg-body-tertiary">
+            <div class="card-footer text-center bg-body-tertiary">
                 <a href="{{ url_for('main.transacoes_redirect') }}">Ver todas as transações <i class="bi bi-arrow-right-short"></i></a>
             </div>
         </div>
@@ -68,7 +61,7 @@
             </div>
         </div>
         
-        <div class="row g-4">
+        <div class="row g-4 mb-4">
             <div class="col-6">
                 <div class="card bg-info-subtle border-2 shadow-sm h-100">
                     <div class="card-body text-center">
@@ -103,7 +96,7 @@
             </div>
         </div>
         
-        <div class="card shadow-sm mt-4">
+        <div class="card shadow-sm">
             <div class="card-header"><i class="bi bi-cash-stack me-2"></i>Receitas Previstas do Mês</div>
             <div class="list-group list-group-flush">
                 {% for receita in receitas_previstas_lista %}

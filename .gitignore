@@ -10,3 +10,6 @@ venv*/
 
 # Instance Folder
 /instance
+
+# Arquivo de variáveis de ambiente
+.env
