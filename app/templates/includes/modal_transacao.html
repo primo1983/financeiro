@@ -1,7 +1,12 @@
 <div class="modal fade" id="transactionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form id="transactionForm" method="post" action="" novalidate>
+            <form id="transactionForm" method="post" action=""
+                  data-add-url="{{ url_for('main.adicionar_transacao') }}"
+                  data-add-cat-url="{{ url_for('main.adicionar_categoria_ajax') }}"
+                  data-sugerir-url="{{ url_for('main.sugerir_dados') }}"
+                  novalidate>
+                
                 {{ form.csrf_token }}
                 {{ form.id(id="edit-id") }} 
                 <div class="modal-header"><h5 class="modal-title" id="modalLabel"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>

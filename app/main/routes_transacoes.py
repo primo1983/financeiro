@@ -3,8 +3,9 @@ from . import main_bp
 from app import db
 from app.models import Transacao, Categoria, ExcecaoTransacao
 from app.forms import TransacaoForm
-from app.utils import expandir_transacoes_na_janela, parse_currency
+from app.utils import expandir_transacoes_na_janela, parse_currency, get_transacoes_filtradas_analise, format_currency
 from flask_login import login_required, current_user
+from flask_wtf.csrf import generate_csrf
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 
@@ -12,30 +13,80 @@ from dateutil.relativedelta import relativedelta
 @login_required
 def transacoes_redirect():
     hoje = date.today()
-    return redirect(url_for('main.listar_transacoes', ano=hoje.year, mes=hoje.month))
+    data_inicio = hoje.replace(day=1)
+    data_fim = data_inicio + relativedelta(months=1) - relativedelta(days=1)
+    return redirect(url_for('main.listar_transacoes', inicio=data_inicio.strftime('%Y-%m-%d'), fim=data_fim.strftime('%Y-%m-%d')))
 
-@main_bp.route('/transacoes/<int:ano>/<int:mes>')
+@main_bp.route('/transacoes/view')
 @login_required
-def listar_transacoes(ano, mes):
-    user_id = current_user.id
+def listar_transacoes():
+    try:
+        data_inicio = datetime.strptime(request.args.get('inicio'), '%Y-%m-%d').date()
+        data_fim = datetime.strptime(request.args.get('fim'), '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return redirect(url_for('main.transacoes_redirect'))
+        
+    todas_as_categorias_usuario = Categoria.query.filter_by(user_id=current_user.id).order_by(Categoria.nome).all()
     form = TransacaoForm()
-    user_categories = Categoria.query.filter_by(user_id=user_id).order_by(Categoria.nome).all()
-    
-    data_inicio_janela = date(ano, mes, 1)
-    data_fim_janela = data_inicio_janela + relativedelta(months=1) - relativedelta(days=1)
-    
-    regras_transacoes = Transacao.query.filter_by(user_id=user_id).options(db.joinedload(Transacao.categoria)).all()
-    transacoes_do_mes = expandir_transacoes_na_janela(regras_transacoes, data_inicio_janela, data_fim_janela)
-    transacoes_do_mes.sort(key=lambda x: (x['data'], x['id'] if isinstance(x['id'], int) else -1), reverse=True)
-    
-    data_atual = date(ano, mes, 1)
-    mes_anterior = data_atual - relativedelta(months=1)
-    mes_seguinte = data_atual + relativedelta(months=1)
-    mes_display = data_atual.strftime('%B de %Y').capitalize()
-    
+
+    query_regras = get_transacoes_filtradas_analise(current_user.id)
+    # A carga inicial é feita pelo JavaScript, mas podemos pré-carregar se quisermos
+    transacoes_iniciais = [] 
+
     return render_template('main/transacoes.html', 
-        transacoes=transacoes_do_mes, form=form, user_categories=user_categories, 
-        nav_mes_display=mes_display, nav_mes_anterior=mes_anterior, nav_mes_seguinte=mes_seguinte)
+        data_inicio=data_inicio.strftime('%Y-%m-%d'), 
+        data_fim=data_fim.strftime('%Y-%m-%d'),
+        user_categories=todas_as_categorias_usuario,
+        form=form,
+        transacoes_iniciais=transacoes_iniciais
+    )
+
+@main_bp.route('/api/transacoes')
+@login_required
+def get_dados_transacoes():
+    try:
+        data_inicio = datetime.strptime(request.args.get('inicio'), '%Y-%m-%d').date()
+        data_fim = datetime.strptime(request.args.get('fim'), '%Y-%m-%d').date()
+        page = request.args.get('page', 1, type=int)
+        per_page = 20
+    except (ValueError, TypeError):
+        return jsonify(success=False, error="Parâmetros inválidos."), 400
+
+    query_regras = get_transacoes_filtradas_analise(current_user.id)
+    regras_filtradas = query_regras.order_by(Transacao.data.desc()).all()
+    
+    transacoes_expandidas = expandir_transacoes_na_janela(regras_filtradas, data_inicio, data_fim)
+    transacoes_expandidas.sort(key=lambda x: x['data'], reverse=True)
+    
+    total_items = len(transacoes_expandidas)
+    total_pages = (total_items + per_page - 1) // per_page if per_page > 0 else 0
+    start = (page - 1) * per_page
+    end = start + per_page
+    transacoes_paginadas = transacoes_expandidas[start:end]
+
+    csrf_token = generate_csrf()
+    transacoes_json = []
+    for t in transacoes_paginadas:
+        transacao_data = {
+            'id': t['id'], 'descricao': t.get('descricao', ''), 'valor': float(t.get('valor', 0)), 'data': t.get('data', date.today()).strftime('%Y-%m-%d'),
+            'data_formatada': t.get('data', date.today()).strftime('%d/%m/%Y'), 'tipo': t.get('tipo', ''), 'categoria_id': t.get('categoria_id', ''),
+            'forma_pagamento': t.get('forma_pagamento', ''), 'recorrencia': t.get('recorrencia', ''),
+            'data_final_recorrencia': t.get('data_final_recorrencia').strftime('%Y-%m-%d') if t.get('data_final_recorrencia') else None,
+            'categoria_nome': t.get('categoria_nome', 'Sem Categoria'), 'is_skipped': t.get('is_skipped', False),
+            'tipo_badge_class': 'text-bg-success' if t.get('tipo') == 'Receita' else 'text-bg-danger',
+            'valor_formatado': format_currency(t.get('valor', 0)),
+            'valor_class': 'text-success' if t.get('tipo') == 'Receita' else 'text-danger',
+            'data_iso': t.get('data', date.today()).strftime('%Y-%m-%d'), 'csrf_token': csrf_token
+        }
+        transacoes_json.append(transacao_data)
+        
+    return jsonify(
+        success=True, transacoes=transacoes_json,
+        has_next=(page < total_pages), has_prev=(page > 1),
+        next_page=(page + 1 if page < total_pages else None),
+        prev_page=(page - 1 if page > 1 else None),
+        current_page=page, total_pages=total_pages
+    )
 
 @main_bp.route('/transacoes/adicionar', methods=['POST'])
 @login_required
@@ -54,7 +105,7 @@ def adicionar_transacao():
             db.session.add(nova_transacao)
             db.session.commit()
             flash('Transação adicionada!', 'success')
-            return jsonify(success=True, redirect_url=url_for('main.listar_transacoes', ano=form.data.data.year, mes=form.data.data.month))
+            return jsonify(success=True, redirect_url=request.referrer or url_for('main.transacoes_redirect'))
         except Exception as e:
             db.session.rollback()
             return jsonify(success=False, errors={'geral': [f'Erro ao salvar no banco de dados: {e}']}), 500

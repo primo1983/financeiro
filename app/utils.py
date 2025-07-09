@@ -1,17 +1,21 @@
 import locale
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
-from app.models import ExcecaoTransacao
+from flask import request, flash
+from app.models import ExcecaoTransacao, Transacao, Categoria
+from sqlalchemy import func, and_
+from app import db
+from flask_login import current_user
 
-# A função agora é uma função Python normal, sem o decorador.
 def format_currency(value):
     if value is None: return "R$ 0,00"
     try:
-        # Tenta definir o locale para pt_BR. Se falhar, usa uma formatação manual.
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
     except locale.Error:
-        return f"R$ {value:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
-    
+        try:
+            locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
+        except locale.Error:
+            return f"R$ {value:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
     return locale.currency(float(value), grouping=True, symbol='R$')
 
 def parse_currency(value_str):
@@ -20,27 +24,19 @@ def parse_currency(value_str):
     return float(cleaned_value)
 
 def expandir_transacoes_na_janela(regras, data_inicio_janela, data_fim_janela):
-    transacoes_na_janela = []
-    
-    # Esta função usa o current_user, mas ela só é chamada de dentro de uma rota,
-    # então não há problema aqui.
-    from flask_login import current_user
     if not current_user.is_authenticated: return []
-    
+    transacoes_na_janela = []
     excecoes = ExcecaoTransacao.query.filter_by(user_id=current_user.id).all()
     excecoes_set = {(e.transacao_id, e.data_excecao) for e in excecoes}
-
     for t in regras:
         data_regra = t.data
         if not t.recorrencia:
             if data_inicio_janela <= data_regra <= data_fim_janela:
                 transacoes_na_janela.append({ 'id': t.id, 'descricao': t.descricao, 'valor': float(t.valor), 'data': t.data, 'tipo': t.tipo, 'categoria_id': t.categoria_id, 'forma_pagamento': t.forma_pagamento, 'recorrencia': t.recorrencia, 'data_final_recorrencia': t.data_final_recorrencia, 'is_rule': True, 'categoria_nome': t.categoria.nome if t.categoria else 'Sem Categoria', 'is_skipped': False })
             continue
-        
         data_corrente = data_regra
         data_final_regra = t.data_final_recorrencia or data_fim_janela
         if data_corrente > data_fim_janela: continue
-        
         while data_corrente <= data_final_regra:
             if data_corrente > data_fim_janela: break
             if data_corrente >= data_inicio_janela:
@@ -52,7 +48,6 @@ def expandir_transacoes_na_janela(regras, data_inicio_janela, data_fim_janela):
             elif t.recorrencia == 'Anual': data_corrente += relativedelta(years=1)
             else: break
             if t.data_final_recorrencia and data_corrente > data_final_regra: break
-            
     return transacoes_na_janela
 
 def calcular_resumo_financeiro(lista_transacoes):
@@ -67,3 +62,22 @@ def calcular_resumo_financeiro(lista_transacoes):
         else:
             despesas_por_cat[cat_nome] = despesas_por_cat.get(cat_nome, 0) + t['valor']
     return {"total_receitas": total_receitas, "total_despesas": total_despesas, "saldo": total_receitas - total_despesas, "receitas_por_categoria": receitas_por_cat, "despesas_por_categoria": despesas_por_cat}
+
+def get_transacoes_filtradas_analise(user_id):
+    """Função auxiliar que monta a query inicial de transações com base nos filtros da request."""
+    tipo_filtro = request.args.get('tipo', 'Todos')
+    categorias_filtro_ids_str = request.args.getlist('categoria')
+    search_term = request.args.get('q', '').strip()
+    query = Transacao.query.filter_by(user_id=user_id).options(db.joinedload(Transacao.categoria))
+    if search_term:
+        query = query.filter(Transacao.descricao.ilike(f'%{search_term}%'))
+    if tipo_filtro in ['Receita', 'Despesa']:
+        query = query.filter(Transacao.tipo == tipo_filtro)
+    if categorias_filtro_ids_str:
+        try:
+            categorias_filtro_ids = [int(id_str) for id_str in categorias_filtro_ids_str if id_str]
+            if categorias_filtro_ids:
+                query = query.filter(Transacao.categoria_id.in_(categorias_filtro_ids))
+        except ValueError:
+            flash('ID de categoria inválido recebido.', 'warning')
+    return query

@@ -22,7 +22,6 @@
                         <div class="col-md-3 text-md-end">Valor</div>
                     </div>
                 </div>
-
                 {% for transacao in ultimas_10_transacoes %}
                 <div class="list-group-item">
                     <div class="row align-items-center">
@@ -134,5 +133,5 @@
 {% block scripts %}
 {{ super() }}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
-{% include 'includes/scripts_modal_transacao.html' %}
+<script src="{{ url_for('static', filename='js/modal_transacao.js') }}" defer></script>
 {% endblock %}

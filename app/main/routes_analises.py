@@ -2,40 +2,11 @@ from flask import render_template, request, redirect, url_for, Response, flash, 
 from . import main_bp
 from app import db
 from app.models import Categoria, Transacao
-from app.utils import expandir_transacoes_na_janela, calcular_resumo_financeiro
+from app.utils import expandir_transacoes_na_janela, calcular_resumo_financeiro, get_transacoes_filtradas_analise, format_currency
 from flask_login import login_required, current_user
-from sqlalchemy import func
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 import io, csv
-
-def get_transacoes_filtradas_analise(user_id, data_inicio, data_fim):
-    """Função auxiliar para buscar e filtrar transações para um período específico."""
-    tipo_filtro = request.args.get('tipo', 'Todos')
-    categorias_filtro_ids_str = request.args.getlist('categoria')
-    search_term = request.args.get('q', '').strip()
-
-    query = Transacao.query.filter_by(user_id=user_id).options(db.joinedload(Transacao.categoria))
-    if search_term:
-        query = query.filter(Transacao.descricao.ilike(f'%{search_term}%'))
-    
-    regras_transacoes = query.all()
-    transacoes_no_periodo = expandir_transacoes_na_janela(regras_transacoes, data_inicio, data_fim)
-    
-    transacoes_filtradas = [t for t in transacoes_no_periodo if not t.get('is_skipped')]
-    
-    if tipo_filtro in ['Receita', 'Despesa']:
-        transacoes_filtradas = [t for t in transacoes_filtradas if t['tipo'] == tipo_filtro]
-    
-    if categorias_filtro_ids_str:
-        try:
-            categorias_filtro_ids = [int(id_str) for id_str in categorias_filtro_ids_str if id_str]
-            if categorias_filtro_ids:
-                transacoes_filtradas = [t for t in transacoes_filtradas if t['categoria_id'] in categorias_filtro_ids]
-        except ValueError:
-            flash('ID de categoria inválido recebido.', 'warning')
-
-    return transacoes_filtradas, tipo_filtro, categorias_filtro_ids_str, search_term
 
 @main_bp.route('/analises')
 @login_required
@@ -55,27 +26,30 @@ def analises():
     except (ValueError, TypeError):
         return redirect(url_for('main.analises_redirect'))
 
-    transacoes_filtradas, tipo_filtro, categorias_filtro_ids, search_term = get_transacoes_filtradas_analise(user_id, data_inicio, data_fim)
+    query_regras = get_transacoes_filtradas_analise(user_id)
+    transacoes_filtradas = expandir_transacoes_na_janela(query_regras.all(), data_inicio, data_fim)
+    
     resumo_periodo = calcular_resumo_financeiro(transacoes_filtradas)
     todas_as_categorias_usuario = Categoria.query.filter_by(user_id=user_id).order_by(Categoria.nome).all()
-
     transacoes_filtradas.sort(key=lambda x: x['data'], reverse=True)
+
+    tipo_filtro = request.args.get('tipo', 'Todos')
+    categorias_filtro_ids_str = request.args.getlist('categoria')
+    search_term = request.args.get('q', '')
 
     return render_template('main/analises.html', 
         transacoes=transacoes_filtradas, 
         data_inicio=data_inicio.strftime('%Y-%m-%d'), data_fim=data_fim.strftime('%Y-%m-%d'),
-        tipo_filtro=tipo_filtro, categorias_filtro_ids=[int(id) for id in categorias_filtro_ids if id],
+        tipo_filtro=tipo_filtro, categorias_filtro_ids=[int(id) for id in categorias_filtro_ids_str if id],
         search_term=search_term,
-        todas_as_categorias_usuario=todas_as_categorias_usuario,
+        user_categories=todas_as_categorias_usuario,
         total_receitas=resumo_periodo['total_receitas'], total_despesas=resumo_periodo['total_despesas'],
         saldo_periodo=resumo_periodo['saldo']
-        # Linhas dos gráficos de pizza foram removidas daqui
     )
 
 @main_bp.route('/exportar/csv')
 @login_required
 def exportar_csv():
-    # ... (código da função continua igual) ...
     user_id = current_user.id
     start_str = request.args.get('inicio'); end_str = request.args.get('fim')
     try:
@@ -86,7 +60,8 @@ def exportar_csv():
         data_inicio = hoje.replace(day=1)
         data_fim = data_inicio + relativedelta(months=1) - relativedelta(days=1)
 
-    transacoes_filtradas, _, _, _ = get_transacoes_filtradas_analise(user_id, data_inicio, data_fim)
+    query_regras = get_transacoes_filtradas_analise(user_id)
+    transacoes_filtradas = expandir_transacoes_na_janela(query_regras.all(), data_inicio, data_fim)
     
     output = io.StringIO(); writer = csv.writer(output, delimiter=';')
     writer.writerow(['Data', 'Descrição', 'Valor', 'Tipo', 'Categoria', 'Forma de Pagamento'])
@@ -101,14 +76,15 @@ def exportar_csv():
 @main_bp.route('/api/analises')
 @login_required
 def get_dados_analise():
-    """Endpoint de API que retorna os dados de análise em formato JSON."""
     try:
         data_inicio = datetime.strptime(request.args.get('inicio'), '%Y-%m-%d').date()
         data_fim = datetime.strptime(request.args.get('fim'), '%Y-%m-%d').date()
     except (ValueError, TypeError):
         return jsonify(success=False, error="Datas inválidas ou não fornecidas."), 400
 
-    transacoes_filtradas, _, _, _ = get_transacoes_filtradas_analise(current_user.id, data_inicio, data_fim)
+    query_regras = get_transacoes_filtradas_analise(current_user.id)
+    transacoes_filtradas = expandir_transacoes_na_janela(query_regras.all(), data_inicio, data_fim)
+    
     resumo_periodo = calcular_resumo_financeiro(transacoes_filtradas)
     
     transacoes_json = []
@@ -127,6 +103,5 @@ def get_dados_analise():
         total_receitas=float(resumo_periodo['total_receitas']),
         total_despesas=float(resumo_periodo['total_despesas']),
         saldo_periodo=float(resumo_periodo['saldo']),
-        transacoes=transacoes_json
-        # Chaves dos gráficos de pizza foram removidas daqui
+        transacoes=transacoes_json,
     )
