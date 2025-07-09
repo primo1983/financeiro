@@ -11,10 +11,8 @@ class Usuario(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
     saldos_visibilidade = db.Column(db.JSON, nullable=False, default=lambda: {
-        "saldo_atual": True, 
-        "receita_mes": True, 
-        "despesa_mes": True, 
-        "saldo_mes": True
+        "saldo_atual": True, "receita_mes": True, 
+        "despesa_mes": True, "saldo_mes": True
     })
     theme = db.Column(db.String(10), nullable=False, default='auto')
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
@@ -39,9 +37,7 @@ class Categoria(db.Model):
     
     transacoes = db.relationship('Transacao', backref='categoria', lazy=True)
     
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'nome', name='_user_id_nome_uc'),
-    )
+    __table_args__ = (db.UniqueConstraint('user_id', 'nome', name='_user_id_nome_uc'),)
 
 class Transacao(db.Model):
     __tablename__ = 'transacoes'
@@ -67,6 +63,4 @@ class ExcecaoTransacao(db.Model):
     transacao_id = db.Column(db.Integer, db.ForeignKey('transacoes.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     
-    __table_args__ = (
-        db.UniqueConstraint('transacao_id', 'data_excecao', name='_transacao_data_uc'),
-    )
+    __table_args__ = (db.UniqueConstraint('transacao_id', 'data_excecao', name='_transacao_data_uc'),)
