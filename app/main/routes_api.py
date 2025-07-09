@@ -16,8 +16,6 @@ def sugerir_dados():
     if not search_term or len(search_term) < 3:
         return jsonify({})
 
-    # Busca a combinação de categoria e forma de pagamento mais frequente
-    # para descrições que contenham o termo pesquisado.
     sugestao = db.session.query(
             Transacao.categoria_id,
             Transacao.forma_pagamento,

@@ -1,4 +1,5 @@
-from flask import render_template, redirect, url_for, jsonify
+from flask import render_template, redirect, url_for, jsonify, request
+from sqlalchemy.orm.attributes import flag_modified
 from . import main_bp
 from app import db
 from app.models import Usuario, Transacao, Categoria
@@ -18,44 +19,58 @@ def index():
     
     regras_transacoes = Transacao.query.filter_by(user_id=user_id).options(db.joinedload(Transacao.categoria)).all()
     
-    # Calcula o Saldo Atual (Total)
     transacoes_ate_hoje = expandir_transacoes_na_janela(regras_transacoes, date(2000, 1, 1), hoje)
     resumo_total = calcular_resumo_financeiro(transacoes_ate_hoje)
-    saldo_atual = resumo_total['saldo']
     
-    # Calcula os totais para os cards do Mês Atual
     inicio_mes_atual = hoje.replace(day=1)
     fim_mes_atual = inicio_mes_atual + relativedelta(months=1) - relativedelta(days=1)
     transacoes_mes_atual = expandir_transacoes_na_janela(regras_transacoes, inicio_mes_atual, fim_mes_atual)
-    resumo_mensal_realizado = calcular_resumo_financeiro(transacoes_mes_atual)
+    resumo_mensal = calcular_resumo_financeiro(transacoes_mes_atual)
     
-    # CORREÇÃO: Calcula o Saldo Previsto (considera tudo, mesmo o que foi pulado)
-    receitas_previstas_total = sum(t['valor'] for t in transacoes_mes_atual if t['tipo'] == 'Receita')
-    despesas_previstas_total = sum(t['valor'] for t in transacoes_mes_atual if t['tipo'] == 'Despesa')
-    saldo_previsto = receitas_previstas_total - despesas_previstas_total
-
-    # Prepara a lista de receitas previstas para o card
-    receitas_previstas_lista = [t for t in transacoes_mes_atual if t['tipo'] == 'Receita' and not t.get('is_skipped')]
-        
     transacoes_ate_hoje.sort(key=lambda x: (x['data'], x['id'] if isinstance(x['id'], int) else -1), reverse=True)
+
+    visibilidade = current_user.saldos_visibilidade
+    if visibilidade is None:
+        visibilidade = {}
 
     return render_template('main/index.html', 
         form=form, 
         user_categories=user_categories, 
-        saldo_atual=saldo_atual, 
-        receita_mes=resumo_mensal_realizado['total_receitas'], 
-        despesa_mes=resumo_mensal_realizado['total_despesas'], 
-        saldo_mes=resumo_mensal_realizado['saldo'],
-        saldo_previsto=saldo_previsto, # Passando a variável que faltava
+        saldo_atual=resumo_total['saldo'], 
+        receita_mes=resumo_mensal['total_receitas'], 
+        despesa_mes=resumo_mensal['total_despesas'], 
+        saldo_mes=resumo_mensal['saldo'],
         ultimas_10_transacoes=transacoes_ate_hoje[:10],
-        receitas_previstas_lista=receitas_previstas_lista,
-        mostrar_saldos=current_user.mostrar_saldos
+        pie_chart_labels=list(resumo_mensal['despesas_por_categoria'].keys()),
+        pie_chart_valores=[float(v) for v in resumo_mensal['despesas_por_categoria'].values()],
+        saldos_visibilidade=visibilidade
     )
 
-@main_bp.route('/toggle-saldo-visibility', methods=['POST'])
+@main_bp.route('/toggle-card-visibility', methods=['POST'])
 @login_required
-def toggle_saldo_visibility():
+def toggle_card_visibility():
+    card_name = request.json.get('card')
+    if not card_name:
+        return jsonify(success=False, error="Nome do card não fornecido."), 400
+
     user = db.session.get(Usuario, current_user.id)
-    user.mostrar_saldos = not user.mostrar_saldos
+    
+    # --- CORREÇÃO APLICADA AQUI ---
+    # Se o campo de visibilidade não for um dicionário (ex: é None para um usuário antigo),
+    # inicializamos com a estrutura COMPLETA.
+    if not isinstance(user.saldos_visibilidade, dict):
+        user.saldos_visibilidade = {
+            "saldo_atual": True,
+            "receita_mes": True,
+            "despesa_mes": True,
+            "saldo_mes": True
+        }
+
+    # Agora, com o dicionário garantido, podemos alterar o estado do card específico.
+    current_state = user.saldos_visibilidade.get(card_name, True)
+    user.saldos_visibilidade[card_name] = not current_state
+    
+    flag_modified(user, 'saldos_visibilidade')
     db.session.commit()
-    return jsonify(success=True)
+    
+    return jsonify(success=True, card=card_name, newState=(not current_state))

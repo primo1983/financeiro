@@ -2,105 +2,82 @@
 {% block title %}Análises e Relatórios{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4"><h3 class="mb-0">Análise por Período</h3></div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Análise Dinâmica</h3>
+    <a href="#" class="btn btn-outline-secondary" id="exportBtn"><i class="bi bi-download me-2"></i>Exportar CSV</a>
+</div>
 
 <div class="card shadow-sm mb-4">
     <div class="card-header"><i class="bi bi-funnel-fill me-2"></i>Filtros</div>
     <div class="card-body">
         <form id="filterForm" method="GET" action="">
             <div class="row g-3 align-items-end">
-                <div class="col-md-3"><label for="ano" class="form-label">Ano</label><select name="ano" id="ano" class="form-select">{% for i in range(2023, 2031) %}<option value="{{ i }}" {% if i == ano_selecionado %}selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
-                <div class="col-md-3"><label for="mes" class="form-label">Mês</label><select name="mes" id="mes" class="form-select"><option value="0" {% if not mes_selecionado or mes_selecionado == 0 %}selected{% endif %}>Ano Inteiro</option>{% for i in range(1, 13) %}<option value="{{ i }}" {% if i == mes_selecionado %}selected{% endif %}>{{ i }}</option>{% endfor %}</select></div>
-                <div class="col-md-6 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-2"></i>Filtrar Período</button></div>
+                <div class="col-md-3">
+                    <label for="date-range-picker" class="form-label">Período</label>
+                    <div class="input-group">
+                        <input id="date-range-picker" type="text" class="form-control" value="{{data_inicio}} a {{data_fim}}">
+                        <button class="btn btn-outline-secondary" type="button" id="btn-mes-atual" title="Mês Atual">Mês</button>
+                        <button class="btn btn-outline-secondary" type="button" id="btn-ano-atual" title="Ano Atual">Ano</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="search-term" class="form-label">Buscar na Descrição</label>
+                    <input type="text" id="search-term" name="q" class="form-control" placeholder="Ex: Supermercado..." value="{{ search_term or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="tipo" class="form-label">Tipo</label>
+                    <select name="tipo" id="tipo" class="form-select filter-trigger">
+                        <option value="Todos" {% if tipo_filtro == 'Todos' %}selected{% endif %}>Todos</option>
+                        <option value="Receita" {% if tipo_filtro == 'Receita' %}selected{% endif %}>Receita</option>
+                        <option value="Despesa" {% if tipo_filtro == 'Despesa' %}selected{% endif %}>Despesa</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="categoria" class="form-label">Categorias</label>
+                    <select name="categoria" id="categoria" class="form-select filter-trigger" multiple>
+                        {% for cat in todas_as_categorias_usuario %}
+                            <option value="{{ cat.id }}" {% if cat.id in categorias_filtro_ids %}selected{% endif %}>{{ cat.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-success h-100">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Receitas no Período</h6>
-                <h4 class="card-title fw-bold mb-0">{{ total_receitas|currency }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-danger h-100">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Despesas no Período</h6>
-                <h4 class="card-title fw-bold mb-0">{{ total_despesas|currency }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-primary h-100">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Saldo do Período</h6>
-                <h4 class="card-title fw-bold mb-0">{{ saldo_periodo|currency }}</h4>
-            </div>
-        </div>
-    </div>
+    <div class="col-md-4"><div class="card text-white bg-success h-100"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Receitas no Período</h6><h4 class="card-title fw-bold mb-0" id="total-receitas-valor">{{ total_receitas|currency }}</h4></div></div></div>
+    <div class="col-md-4"><div class="card text-white bg-danger h-100"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Despesas no Período</h6><h4 class="card-title fw-bold mb-0" id="total-despesas-valor">{{ total_despesas|currency }}</h4></div></div></div>
+    <div class="col-md-4"><div class="card text-white bg-primary h-100"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Saldo do Período</h6><h4 class="card-title fw-bold mb-0" id="saldo-periodo-valor">{{ saldo_periodo|currency }}</h4></div></div></div>
 </div>
 
 <div class="card shadow-sm mb-4">
-    <div class="card-header"><i class="bi bi-table me-2"></i>Transações do Período</div>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Tipo</th>
-                    <th>Categoria</th>
-                    <th style="width: 40%;">Descrição</th>
-                    <th class="text-end">Valor</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for transacao in transacoes %}
-                <tr>
-                    <td>{{ transacao.data.strftime('%d/%m/%Y') }}</td>
-                    <td>
-                        {% if transacao.tipo == 'Receita' %}<span class="badge rounded-pill text-bg-success">Receita</span>
-                        {% else %}<span class="badge rounded-pill text-bg-danger">Despesa</span>{% endif %}
-                    </td>
-                    <td>{{ transacao.categoria_nome }}</td>
-                    <td>{{ transacao.descricao }}</td>
-                    <td class="text-end fw-bold {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</td>
-                </tr>
-                {% else %}
-                <tr><td colspan="5" class="text-center text-muted p-4">Nenhuma transação encontrada para os filtros selecionados.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Despesas por Categoria</div>
-            <div class="card-body">
-                <canvas id="graficoDespesas"></canvas>
-                {% if not grafico_despesas_valores %}<p class="text-center text-muted mt-3">Nenhuma despesa para exibir.</p>{% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header"><i class="bi bi-pie-chart-fill me-2"></i>Receitas por Categoria</div>
-            <div class="card-body">
-                <canvas id="graficoReceitas"></canvas>
-                 {% if not grafico_receitas_valores %}<p class="text-center text-muted mt-3">Nenhuma receita para exibir.</p>{% endif %}
-            </div>
-        </div>
-    </div>
+    <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-table me-2"></i>Transações do Período</span><div id="loading-spinner" class="spinner-border spinner-border-sm text-primary" role="status" style="display: none;"><span class="visually-hidden">Loading...</span></div></div>
+    <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Categoria</th>
+                <th>Tipo</th>
+                <th style="width: 40%;">Descrição</th>
+                <th>Data</th>
+                <th class="text-end">Valor</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-transacoes-corpo">
+            {% for transacao in transacoes %}
+            <tr>
+                <td>{{ transacao.categoria_nome }}</td>
+                <td><span class="badge rounded-pill {{ 'text-bg-success' if transacao.tipo == 'Receita' else 'text-bg-danger' }}">{{ transacao.tipo }}</span></td>
+                <td>{{ transacao.descricao }}</td>
+                <td>{{ transacao.data.strftime('%d/%m/%Y') }}</td>
+                <td class="text-end fw-bold {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted p-4">Nenhuma transação encontrada para os filtros selecionados.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table></div>
 </div>
 {% endblock %}
 
-
-{% block scripts %}
-{{ super() }}
-<script src="{{ url_for('static', filename='js/analises.js') }}" defer></script>
-{% endblock %}
+{% block scripts %}{{ super() }}<script src="{{ url_for('static', filename='js/analises.js') }}" defer></script>{% endblock %}

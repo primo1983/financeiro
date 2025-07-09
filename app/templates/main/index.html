@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="row g-4">
-    <div class="col-lg-7 order-1 order-lg-1">
+    <div class="col-lg-7">
         <div class="d-grid mb-4">
             <button type="button" id="openAddModalBtn" class="btn btn-primary btn-lg py-3">
                 <i class="bi bi-plus-circle-fill me-2"></i> Adicionar Nova Transação
@@ -14,25 +14,36 @@
                 <h5 class="mb-0"><i class="bi bi-list-ol me-2"></i>Últimas 10 Transações</h5>
             </div>
             <div class="list-group list-group-flush">
+                <div class="list-group-item d-none d-md-block">
+                    <div class="row fw-bold text-muted">
+                        <div class="col-md-3">Categoria</div>
+                        <div class="col-md-4">Descrição</div>
+                        <div class="col-md-2 text-md-center">Data</div>
+                        <div class="col-md-3 text-md-end">Valor</div>
+                    </div>
+                </div>
+
                 {% for transacao in ultimas_10_transacoes %}
                 <div class="list-group-item">
-                    <div class="row w-100 align-items-center gx-2">
-                        <div class="col-12 col-sm-6">
-                            <div class="fw-bold text-truncate">
-                                {{ transacao.descricao }}
-                                {% if not transacao.is_skipped and transacao.recorrencia %}
-                                    <span class="ms-2" title="Transação Recorrente ({{ transacao.recorrencia }})">
-                                        <i class="bi bi-arrow-repeat text-muted"></i>
-                                    </span>
+                    <div class="row align-items-center">
+                        <div class="col-md-3 text-muted">
+                            <span class="d-md-none fw-bold">Categoria: </span>{{ transacao.categoria_nome }}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="fw-bold">
+                                {% if transacao.recorrencia %}
+                                    <i class="bi bi-arrow-repeat me-2 text-primary" title="Transação Recorrente"></i>
                                 {% endif %}
+                                {{ transacao.descricao }}
                             </div>
-                            <small class="text-muted d-sm-none">{{ transacao.data.strftime('%d/%m/%Y') }}</small>
                         </div>
-                        <div class="col-sm-3 text-sm-center">
-                            <span class="text-muted">{{ transacao.data.strftime('%d/%m/%Y') }}</span>
+                        <div class="col-md-2 text-md-center">
+                            <span class="d-md-none fw-bold">Data: </span>{{ transacao.data.strftime('%d/%m/%Y') }}
                         </div>
-                        <div class="col-sm-3 text-sm-end">
-                            <span class="fw-bold fs-6 {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</span>
+                        <div class="col-md-3 text-md-end">
+                            <span class="fw-bold fs-6 {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">
+                                {{ transacao.valor|currency }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -40,78 +51,79 @@
                 <div class="list-group-item text-center text-muted p-4">Nenhuma transação encontrada.</div>
                 {% endfor %}
             </div>
-            <div class="card-footer text-center bg-body-tertiary">
+             <div class="card-footer text-center bg-body-tertiary">
                 <a href="{{ url_for('main.transacoes_redirect') }}">Ver todas as transações <i class="bi bi-arrow-right-short"></i></a>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-5 order-2 order-lg-2">
+    <div class="col-lg-5">
         <div class="card text-white bg-primary shadow-sm mb-4">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <h6 class="card-subtitle mb-1">Saldo Atual (Total)</h6>
-                        <h4 id="saldo-atual-valor" class="fw-bold mb-0">{% if mostrar_saldos %}{{ saldo_atual|currency }}{% else %}R$ ••••••{% endif %}</h4>
+                        <h4 class="fw-bold mb-0" id="saldo_atual-valor">
+                            {% if saldos_visibilidade.get('saldo_atual', True) %}{{ saldo_atual|currency }}{% else %}R$ ••••••{% endif %}
+                        </h4>
                     </div>
-                    <button id="toggle-saldo-btn" class="btn btn-sm btn-link text-white p-0" title="Alternar visibilidade do saldo">
-                        <i class="bi {% if mostrar_saldos %}bi-eye-slash{% else %}bi-eye{% endif %} fs-5"></i>
+                    <button class="btn btn-sm btn-link text-white p-0 toggle-saldo-btn" title="Alternar visibilidade" data-card-name="saldo_atual" data-card-value="{{ saldo_atual|currency }}">
+                        <i class="bi {% if saldos_visibilidade.get('saldo_atual', True) %}bi-eye-slash{% else %}bi-eye{% endif %} fs-5" id="saldo_atual-icon"></i>
                     </button>
                 </div>
             </div>
         </div>
-        
-        <div class="row g-4 mb-4">
+    
+        <div class="row g-3 mb-3">
             <div class="col-6">
-                <div class="card bg-info-subtle border-2 shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <h6 class="card-subtitle text-muted mb-2">Saldo Previsto</h6>
-                        <h4 class="fw-bold mb-0">{{ saldo_previsto|currency }}</h4>
+                <div class="card text-white bg-success h-100">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                             <div>
+                                <h6 class="card-subtitle mb-1">Receita do Mês</h6>
+                                <h5 class="fw-bold mb-0" id="receita_mes-valor">
+                                    {% if saldos_visibilidade.get('receita_mes', True) %}{{ receita_mes|currency }}{% else %}R$ ••••••{% endif %}
+                                </h5>
+                            </div>
+                            <button class="btn btn-sm btn-link text-white p-0 toggle-saldo-btn" title="Alternar visibilidade" data-card-name="receita_mes" data-card-value="{{ receita_mes|currency }}">
+                                <i class="bi {% if saldos_visibilidade.get('receita_mes', True) %}bi-eye-slash{% else %}bi-eye{% endif %}" id="receita_mes-icon"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <h6 class="card-subtitle text-muted mb-2">Saldo do Mês</h6>
-                        <h4 class="fw-bold mb-0">{{ saldo_mes|currency }}</h4>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6">
-                <div class="card text-white bg-success shadow-sm h-100">
-                     <div class="card-body">
-                        <h6 class="card-subtitle mb-2">Receita do Mês</h6>
-                        <h4 class="fw-bold mb-0">{{ receita_mes|currency }}</h4>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6">
-                <div class="card text-white bg-danger shadow-sm h-100">
-                     <div class="card-body">
-                        <h6 class="card-subtitle mb-2">Despesa do Mês</h6>
-                        <h4 class="fw-bold mb-0">{{ despesa_mes|currency }}</h4>
+                <div class="card text-white bg-danger h-100">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-subtitle mb-1">Despesa do Mês</h6>
+                                <h5 class="fw-bold mb-0" id="despesa_mes-valor">
+                                    {% if saldos_visibilidade.get('despesa_mes', True) %}{{ despesa_mes|currency }}{% else %}R$ ••••••{% endif %}
+                                </h5>
+                            </div>
+                            <button class="btn btn-sm btn-link text-white p-0 toggle-saldo-btn" title="Alternar visibilidade" data-card-name="despesa_mes" data-card-value="{{ despesa_mes|currency }}">
+                                <i class="bi {% if saldos_visibilidade.get('despesa_mes', True) %}bi-eye-slash{% else %}bi-eye{% endif %}" id="despesa_mes-icon"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="card shadow-sm">
-            <div class="card-header"><i class="bi bi-cash-stack me-2"></i>Receitas Previstas do Mês</div>
-            <div class="list-group list-group-flush">
-                {% for receita in receitas_previstas_lista %}
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>
-                        {% if receita.recorrencia %}
-                            <i class="bi bi-arrow-repeat text-muted me-2" title="Ocorrência de uma recorrência"></i>
-                        {% endif %}
-                        {{ receita.descricao }}
-                    </span>
-                    <span class="fw-bold text-success">{{ receita.valor|currency }}</span>
+        <div class="card shadow-sm bg-body-secondary">
+            <div class="card-body p-2">
+                 <div class="d-flex justify-content-between align-items-center px-2">
+                    <div class="text-center flex-grow-1">
+                        <h6 class="card-subtitle text-muted mb-1">Saldo do Mês</h6>
+                        <h5 class="fw-bold mb-0" id="saldo_mes-valor">
+                            {% if saldos_visibilidade.get('saldo_mes', True) %}{{ saldo_mes|currency }}{% else %}R$ ••••••{% endif %}
+                        </h5>
+                    </div>
+                    <button class="btn btn-sm btn-link text-body-secondary p-0 toggle-saldo-btn" title="Alternar visibilidade" data-card-name="saldo_mes" data-card-value="{{ saldo_mes|currency }}">
+                        <i class="bi {% if saldos_visibilidade.get('saldo_mes', True) %}bi-eye-slash{% else %}bi-eye{% endif %} fs-5" id="saldo_mes-icon"></i>
+                    </button>
                 </div>
-                {% else %}
-                <div class="list-group-item text-center text-muted p-3">Nenhuma receita prevista para este mês.</div>
-                {% endfor %}
             </div>
         </div>
     </div>
@@ -121,17 +133,6 @@
 
 {% block scripts %}
 {{ super() }}
-<script defer>
-document.addEventListener('DOMContentLoaded', function () {
-    const toggleBtn = document.getElementById('toggle-saldo-btn');
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            fetch("{{ url_for('main.toggle_saldo_visibility') }}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }})
-            .then(response => { if (response.ok) { window.location.reload(); } else { alert('Ocorreu um erro.'); } });
-        });
-    }
-});
-</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
 {% include 'includes/scripts_modal_transacao.html' %}
 {% endblock %}

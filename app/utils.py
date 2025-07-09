@@ -1,14 +1,17 @@
 import locale
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
-from flask import current_app, request
-from flask_login import current_user
-from app.models import ExcecaoTransacao, Transacao, Categoria
-from app import db
+from app.models import ExcecaoTransacao
 
-@current_app.template_filter('currency')
+# A função agora é uma função Python normal, sem o decorador.
 def format_currency(value):
     if value is None: return "R$ 0,00"
+    try:
+        # Tenta definir o locale para pt_BR. Se falhar, usa uma formatação manual.
+        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+    except locale.Error:
+        return f"R$ {value:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+    
     return locale.currency(float(value), grouping=True, symbol='R$')
 
 def parse_currency(value_str):
@@ -18,7 +21,12 @@ def parse_currency(value_str):
 
 def expandir_transacoes_na_janela(regras, data_inicio_janela, data_fim_janela):
     transacoes_na_janela = []
+    
+    # Esta função usa o current_user, mas ela só é chamada de dentro de uma rota,
+    # então não há problema aqui.
+    from flask_login import current_user
     if not current_user.is_authenticated: return []
+    
     excecoes = ExcecaoTransacao.query.filter_by(user_id=current_user.id).all()
     excecoes_set = {(e.transacao_id, e.data_excecao) for e in excecoes}
 

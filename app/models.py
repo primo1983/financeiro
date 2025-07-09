@@ -9,7 +9,12 @@ class Usuario(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    mostrar_saldos = db.Column(db.Boolean, nullable=False, default=True)
+    saldos_visibilidade = db.Column(db.JSON, nullable=False, default=lambda: {
+    "saldo_atual": True, 
+    "receita_mes": True, 
+    "despesa_mes": True, 
+    "saldo_mes": True
+    })
     theme = db.Column(db.String(10), nullable=False, default='auto')
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
     
