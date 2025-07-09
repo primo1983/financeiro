@@ -13,11 +13,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const pageInfo = document.getElementById('page-info');
 
     let debounceTimeout;
-    let tomSelect;
     let currentPage = 1;
 
+    // --- FUNÇÃO DE FORMATAÇÃO DE MOEDA ---
     const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
+    // --- FUNÇÕES DE ATUALIZAÇÃO DA UI ---
     function atualizarTabela(transacoes) {
         const corpoTabela = document.getElementById('tabela-transacoes-corpo');
         corpoTabela.innerHTML = '';
@@ -81,14 +82,24 @@ document.addEventListener('DOMContentLoaded', function () {
         const inicio = datePicker.getStartDate();
         const fim = datePicker.getEndDate();
         if (!inicio || !fim) { if (loadingSpinner) loadingSpinner.style.display = 'none'; return; }
+        
         const params = new URLSearchParams({
             inicio: inicio.toJSDate().toISOString().split('T')[0],
             fim: fim.toJSDate().toISOString().split('T')[0],
-            q: searchTermInput.value, tipo: tipoSelect.value, page: currentPage
+            q: searchTermInput.value, 
+            tipo: tipoSelect.value, 
+            page: currentPage
         });
-        const selectedCategories = tomSelect.items;
-        selectedCategories.forEach(catId => params.append('categoria', catId));
+        
+        // --- CORREÇÃO APLICADA AQUI ---
+        // Lendo os valores de um <select multiple> padrão do navegador, sem TomSelect.
+        const selectedCategories = Array.from(categoriaSelect.selectedOptions).map(opt => opt.value);
+        selectedCategories.forEach(catId => {
+            if (catId) params.append('categoria', catId);
+        });
+        
         const apiUrl = `/api/transacoes?${params.toString()}`;
+        
         try {
             const response = await fetch(apiUrl);
             const data = await response.json();
@@ -96,19 +107,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 atualizarTabela(data.transacoes);
                 atualizarPaginacao(data);
             }
-        } catch (error) { console.error("Erro ao buscar dados:", error); } 
-        finally { if (loadingSpinner) loadingSpinner.style.display = 'none'; }
+        } catch (error) { 
+            console.error("Erro ao buscar dados:", error); 
+        } finally { 
+            if (loadingSpinner) loadingSpinner.style.display = 'none'; 
+        }
     }
 
-    if (window.TomSelect) {
-        tomSelect = new TomSelect('#categoria', { plugins: ['remove_button'], placeholder: 'Selecione...' });
-        tomSelect.on('change', () => atualizarTransacoes(1));
-    } else {
-        categoriaSelect.addEventListener('change', () => atualizarTransacoes(1));
-    }
+    // --- INICIALIZAÇÃO E EVENT LISTENERS ---
+    
+    // Listener de categoria agora é um listener padrão.
+    categoriaSelect.addEventListener('change', () => atualizarTransacoes(1));
     
     const initialStartDate = new Date(datePickerInput.dataset.inicio + 'T00:00:00');
     const initialEndDate = new Date(datePickerInput.dataset.fim + 'T00:00:00');
+    
     const datePicker = new Litepicker({
         element: datePickerInput, singleMode: false, format: 'DD/MM/YYYY', lang: 'pt-BR',
         startDate: initialStartDate, endDate: initialEndDate,
@@ -121,11 +134,13 @@ document.addEventListener('DOMContentLoaded', function () {
         datePicker.setDateRange(new Date(hoje.getFullYear(), hoje.getMonth(), 1), new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0));
         atualizarTransacoes(1); 
     });
+    
     btnAnoAtual.addEventListener('click', () => {
         const hoje = new Date();
         datePicker.setDateRange(new Date(hoje.getFullYear(), 0, 1), new Date(hoje.getFullYear(), 11, 31));
         atualizarTransacoes(1);
     });
+    
     searchTermInput.addEventListener('input', () => {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
@@ -134,13 +149,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, 500);
     });
+    
     tipoSelect.addEventListener('change', () => atualizarTransacoes(1));
+    
     prevPageBtn.addEventListener('click', (e) => {
         e.preventDefault();
         if (!e.currentTarget.parentElement.classList.contains('disabled')) {
             atualizarTransacoes(parseInt(e.currentTarget.dataset.page));
         }
     });
+
     nextPageBtn.addEventListener('click', (e) => {
         e.preventDefault();
         if (!e.currentTarget.parentElement.classList.contains('disabled')) {
@@ -148,7 +166,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // --- CORREÇÃO APLICADA AQUI ---
-    // Chama a função de atualização uma vez para popular a tabela na carga inicial da página.
-    atualizarTransacoes();
+    // Carrega os dados da primeira página ao iniciar
+    atualizarTransacoes(1);
 });

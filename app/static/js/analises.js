@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // --- VARIÁVEIS GLOBAIS E ELEMENTOS DO DOM ---
     const loadingSpinner = document.getElementById('loading-spinner');
     const searchTermInput = document.getElementById('search-term');
     const datePickerInput = document.getElementById('date-range-picker');
@@ -8,14 +7,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnMesAtual = document.getElementById('btn-mes-atual');
     const btnAnoAtual = document.getElementById('btn-ano-atual');
     const exportBtn = document.getElementById('exportBtn');
+    const paginationControls = document.getElementById('pagination-controls'); // Adicionado para futuras implementações se necessário
 
     let debounceTimeout;
-    let tomSelect; 
 
-    // --- FUNÇÃO DE FORMATAÇÃO DE MOEDA ---
-    const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+    const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
 
-    // --- FUNÇÕES DE ATUALIZAÇÃO DA UI ---
     function atualizarCards(data) {
         document.getElementById('total-receitas-valor').textContent = currencyFormatter.format(data.total_receitas);
         document.getElementById('total-despesas-valor').textContent = currencyFormatter.format(data.total_despesas);
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const corpoTabela = document.getElementById('tabela-transacoes-corpo');
         corpoTabela.innerHTML = '';
         if (transacoes.length === 0) {
-            corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-4">Nenhuma transação encontrada.</td></tr>';
+            corpoTabela.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-4">Nenhuma transação encontrada para os filtros selecionados.</td></tr>';
             return;
         }
         transacoes.forEach(t => {
@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- FUNÇÃO PRINCIPAL DE FETCH ---
     async function atualizarAnalises() {
         if (loadingSpinner) loadingSpinner.style.display = 'block';
 
@@ -59,11 +58,15 @@ document.addEventListener('DOMContentLoaded', function () {
             tipo: tipoSelect.value
         });
         
-        const selectedCategories = tomSelect.items;
-        selectedCategories.forEach(catId => params.append('categoria', catId));
+        const selectedCategories = Array.from(categoriaSelect.selectedOptions).map(opt => opt.value);
+        selectedCategories.forEach(catId => {
+            if (catId) params.append('categoria', catId);
+        });
 
         const apiUrl = `/api/analises?${params.toString()}`;
-        exportBtn.href = `/exportar/csv?${params.toString()}`;
+        if (exportBtn) {
+           exportBtn.href = `/exportar/csv?${params.toString()}`;
+        }
 
         try {
             const response = await fetch(apiUrl);
@@ -79,36 +82,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- INICIALIZAÇÃO E EVENT LISTENERS ---
-    
-    if (window.TomSelect) {
-        tomSelect = new TomSelect('#categoria', {
-            plugins: ['remove_button'],
-            placeholder: 'Selecione as categorias...'
-        });
-        tomSelect.on('change', atualizarAnalises);
-    } else {
-        categoriaSelect.addEventListener('change', atualizarAnalises);
-    }
-    
-    // --- CORREÇÃO APLICADA AQUI ---
-    // 1. Lemos as datas do HTML como texto.
-    const initialStartDateStr = datePickerInput.dataset.inicio;
-    const initialEndDateStr = datePickerInput.dataset.fim;
-    
-    // 2. Convertemos o texto para Objetos Date do Javascript.
-    // Adicionamos T00:00:00 para evitar problemas de fuso horário.
-    const initialStartDate = new Date(initialStartDateStr + 'T00:00:00');
-    const initialEndDate = new Date(initialEndDateStr + 'T00:00:00');
-
-    // 3. Inicializamos o Litepicker com os Objetos Date corretos.
     const datePicker = new Litepicker({
         element: datePickerInput,
         singleMode: false,
         format: 'DD/MM/YYYY',
         lang: 'pt-BR',
-        startDate: initialStartDate, // Passamos o objeto Date
-        endDate: initialEndDate,     // Passamos o objeto Date
+        startDate: datePickerInput.dataset.inicio,
+        endDate: datePickerInput.dataset.fim,
         dropdowns: { months: true, years: true },
         setup: (picker) => {
             picker.on('selected', () => {
@@ -117,15 +97,15 @@ document.addEventListener('DOMContentLoaded', function () {
         },
     });
 
-    btnMesAtual.addEventListener('click', () => {
+    btnMesAtual?.addEventListener('click', () => {
         const hoje = new Date();
         const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
         const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
         datePicker.setDateRange(inicioMes, fimMes);
-        atualizarAnalises(); 
+        atualizarAnalises();
     });
 
-    btnAnoAtual.addEventListener('click', () => {
+    btnAnoAtual?.addEventListener('click', () => {
         const hoje = new Date();
         const inicioAno = new Date(hoje.getFullYear(), 0, 1);
         const fimAno = new Date(hoje.getFullYear(), 11, 31);
@@ -133,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
         atualizarAnalises();
     });
 
-    searchTermInput.addEventListener('input', () => {
+    searchTermInput?.addEventListener('input', () => {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
             if (searchTermInput.value.length === 0 || searchTermInput.value.length >= 2) {
@@ -142,5 +122,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 500);
     });
 
-    tipoSelect.addEventListener('change', atualizarAnalises);
+    tipoSelect?.addEventListener('change', atualizarAnalises);
+    categoriaSelect?.addEventListener('change', atualizarAnalises);
 });

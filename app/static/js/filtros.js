@@ -1,0 +1,151 @@
+document.addEventListener('DOMContentLoaded', function () {
+    const filterForm = document.getElementById('filterForm');
+    if (!filterForm) return; 
+
+    // --- VARIÁVEIS GLOBAIS E ELEMENTOS DO DOM ---
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const datePickerInput = document.getElementById('date-range-picker');
+    const pageUrl = window.location.pathname; 
+    const apiEndpoint = pageUrl.replace('/view', '').replace('/analises', '/api/analises').replace('/transacoes', '/api/transacoes');
+
+    let debounceTimeout;
+    let tomSelect;
+    let currentPage = 1;
+
+    // --- FUNÇÕES DE ATUALIZAÇÃO DA UI ---
+    function atualizarCards(data) {
+        // Esta função agora recebe os dados já formatados do backend
+        const receitasEl = document.getElementById('total-receitas-valor');
+        const despesasEl = document.getElementById('total-despesas-valor');
+        const saldoEl = document.getElementById('saldo-periodo-valor');
+
+        if(receitasEl) receitasEl.textContent = data.total_receitas;
+        if(despesasEl) despesasEl.textContent = data.total_despesas;
+        if(saldoEl) saldoEl.textContent = data.saldo_periodo;
+    }
+
+    function atualizarTabela(transacoes) {
+        const corpoTabela = document.getElementById('tabela-corpo');
+        if (!corpoTabela) return;
+        corpoTabela.innerHTML = '';
+        if (transacoes.length === 0) {
+            const colspan = corpoTabela.closest('table').querySelector('thead tr').childElementCount;
+            corpoTabela.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-muted p-4">Nenhuma transação encontrada.</td></tr>`;
+            return;
+        }
+        transacoes.forEach(t => {
+            let acoesHtml = '';
+            if (pageUrl.includes('/transacoes')) {
+                acoesHtml = t.is_skipped ?
+                    `<form action="/transacoes/reativar" method="post" class="d-inline" onsubmit="return confirm('Deseja reativar esta ocorrência?');"><input type="hidden" name="csrf_token" value="${t.csrf_token}"/><input type="hidden" name="transacao_id" value="${t.id}"><input type="hidden" name="data_excecao" value="${t.data_iso}"><button type="submit" class="btn btn-sm btn-outline-success" title="Reativar"><i class="bi bi-calendar-check"></i></button></form>` :
+                    `<button type="button" class="btn btn-sm btn-outline-warning edit-btn" title="Editar" data-dados='${JSON.stringify(t)}'><i class="bi bi-pencil-square"></i></button>
+                     ${t.recorrencia ? `<form action="/transacoes/excluir/${t.id}" method="post" class="d-inline" onsubmit="return confirm('Apagar a regra e TODAS as suas ocorrências futuras?');"><input type="hidden" name="csrf_token" value="${t.csrf_token}"/><button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Regra"><i class="bi bi-trash3"></i></button></form><form action="/transacoes/ignorar" method="post" class="d-inline" onsubmit="return confirm('Deseja ignorar apenas esta ocorrência?');"><input type="hidden" name="csrf_token" value="${t.csrf_token}"/><input type="hidden" name="transacao_id" value="${t.id}"><input type="hidden" name="data_excecao" value="${t.data_iso}"><button type="submit" class="btn btn-sm btn-outline-secondary" title="Ignorar ocorrência"><i class="bi bi-calendar-x"></i></button></form>` : `<form action="/transacoes/excluir/${t.id}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza?');"><input type="hidden" name="csrf_token" value="${t.csrf_token}"/><button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash3"></i></button></form>`}`;
+            }
+
+            const linha = `
+                <tr>
+                    <td>${t.categoria_nome}</td>
+                    <td><span class="badge rounded-pill ${t.tipo_badge_class}">${t.tipo}</span></td>
+                    <td>${t.descricao} ${t.recorrencia && !t.is_skipped && pageUrl.includes('/transacoes') ? '<span class="ms-1 text-primary-emphasis fw-normal" title="Recorrente"><i class="bi bi-arrow-repeat"></i></span>' : ''}</td>
+                    <td>${t.data_formatada}</td>
+                    <td class="text-end fw-bold ${t.valor_class}">${t.valor_formatado}</td>
+                    ${pageUrl.includes('/transacoes') ? `<td class="text-end">${acoesHtml}</td>` : ''}
+                </tr>`;
+            corpoTabela.insertAdjacentHTML('beforeend', linha);
+        });
+    }
+
+    function atualizarPaginacao(data) {
+        // ... (código igual ao anterior)
+    }
+
+    function atualizarUICompleta(data) {
+        atualizarCards(data);
+        atualizarTabela(data.transacoes);
+        atualizarPaginacao(data);
+    }
+
+    // --- FUNÇÃO PRINCIPAL DE FETCH ---
+    async function atualizarFiltros(page = 1) {
+        if (loadingSpinner) loadingSpinner.style.display = 'block';
+        currentPage = page;
+        const inicio = datePicker.getStartDate();
+        const fim = datePicker.getEndDate();
+        if (!inicio || !fim) { if (loadingSpinner) loadingSpinner.style.display = 'none'; return; }
+        
+        const params = new URLSearchParams({
+            inicio: inicio.toJSDate().toISOString().split('T')[0],
+            fim: fim.toJSDate().toISOString().split('T')[0],
+            q: filterForm.q.value,
+            tipo: filterForm.tipo.value,
+            page: currentPage
+        });
+        
+        const selectedCategories = tomSelect.items;
+        selectedCategories.forEach(catId => params.append('categoria', catId));
+        
+        const url = `${apiEndpoint}?${params.toString()}`;
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.href = `/exportar/csv?${params.toString()}`;
+        }
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.success) {
+                atualizarUICompleta(data);
+            }
+        } catch (error) { console.error("Erro ao buscar dados:", error); } 
+        finally { if (loadingSpinner) loadingSpinner.style.display = 'none'; }
+    }
+
+    // --- INICIALIZAÇÃO E EVENT LISTENERS ---
+    tomSelect = new TomSelect('#categoria', { plugins: ['remove_button'], placeholder: 'Todas' });
+    const datePicker = new Litepicker({
+        element: datePickerInput, singleMode: false, format: 'DD/MM/YYYY', lang: 'pt-BR',
+        startDate: datePickerInput.dataset.inicio, endDate: datePickerInput.dataset.fim,
+        dropdowns: { months: true, years: true },
+        setup: (picker) => { picker.on('selected', () => { atualizarFiltros(1); }); },
+    });
+
+    filterForm.addEventListener('submit', (e) => { e.preventDefault(); atualizarFiltros(1); });
+    filterForm.tipo.addEventListener('change', () => atualizarFiltros(1));
+    tomSelect.on('change', () => atualizarFiltros(1));
+    filterForm.q.addEventListener('input', () => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            if (filterForm.q.value.length === 0 || filterForm.q.value.length >= 2) {
+                atualizarFiltros(1);
+            }
+        }, 500);
+    });
+
+    document.getElementById('btn-mes-atual')?.addEventListener('click', () => {
+        const hoje = new Date();
+        datePicker.setDateRange(new Date(hoje.getFullYear(), hoje.getMonth(), 1), new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0));
+        atualizarFiltros(1); 
+    });
+    document.getElementById('btn-ano-atual')?.addEventListener('click', () => {
+        const hoje = new Date();
+        datePicker.setDateRange(new Date(hoje.getFullYear(), 0, 1), new Date(hoje.getFullYear(), 11, 31));
+        atualizarFiltros(1);
+    });
+
+    // Listeners da paginação (se existirem)
+    document.getElementById('prev-page-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!e.currentTarget.parentElement.classList.contains('disabled')) {
+            atualizarFiltros(parseInt(e.currentTarget.dataset.page));
+        }
+    });
+    document.getElementById('next-page-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!e.currentTarget.parentElement.classList.contains('disabled')) {
+            atualizarFiltros(parseInt(e.currentTarget.dataset.page));
+        }
+    });
+
+    // Carga inicial dos dados
+    atualizarFiltros(1);
+});

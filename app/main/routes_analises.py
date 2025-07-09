@@ -8,6 +8,7 @@ from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 import io, csv
 
+# ... (o início do arquivo, com get_transacoes_filtradas_analise, analises_redirect, etc., continua igual)
 @main_bp.route('/analises')
 @login_required
 def analises_redirect():
@@ -73,12 +74,15 @@ def exportar_csv():
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": f"attachment;filename={filename}"})
 
 
+# --- ROTA DE API CORRIGIDA ---
 @main_bp.route('/api/analises')
 @login_required
 def get_dados_analise():
     try:
         data_inicio = datetime.strptime(request.args.get('inicio'), '%Y-%m-%d').date()
         data_fim = datetime.strptime(request.args.get('fim'), '%Y-%m-%d').date()
+        page = request.args.get('page', 1, type=int) # Adicionado para consistência
+        per_page = 20
     except (ValueError, TypeError):
         return jsonify(success=False, error="Datas inválidas ou não fornecidas."), 400
 
@@ -87,21 +91,38 @@ def get_dados_analise():
     
     resumo_periodo = calcular_resumo_financeiro(transacoes_filtradas)
     
+    transacoes_filtradas.sort(key=lambda x: x['data'], reverse=True)
+
+    # Lógica de paginação manual (igual à da pág. de transações)
+    total_items = len(transacoes_filtradas)
+    total_pages = (total_items + per_page - 1) // per_page if per_page > 0 else 0
+    start = (page - 1) * per_page
+    end = start + per_page
+    transacoes_paginadas = transacoes_filtradas[start:end]
+    
     transacoes_json = []
-    for t in transacoes_filtradas:
+    for t in transacoes_paginadas:
         transacoes_json.append({
-            'data': t['data'].strftime('%d/%m/%Y'), 'tipo': t['tipo'],
+            'data_formatada': t['data'].strftime('%d/%m/%Y'), # Enviando com o nome correto
+            'tipo': t['tipo'],
             'tipo_badge_class': 'text-bg-success' if t['tipo'] == 'Receita' else 'text-bg-danger',
-            'categoria_nome': t['categoria_nome'], 'descricao': t['descricao'],
-            'valor': float(t['valor']),
+            'categoria_nome': t['categoria_nome'], 
+            'descricao': t['descricao'],
+            'valor_formatado': format_currency(t['valor']), # Enviando com o nome correto
             'valor_class': 'text-success' if t['tipo'] == 'Receita' else 'text-danger'
         })
-    transacoes_json.sort(key=lambda x: datetime.strptime(x['data'], '%d/%m/%Y'), reverse=True)
     
     return jsonify(
         success=True,
-        total_receitas=float(resumo_periodo['total_receitas']),
-        total_despesas=float(resumo_periodo['total_despesas']),
-        saldo_periodo=float(resumo_periodo['saldo']),
+        # Enviando os valores dos cards já formatados
+        total_receitas=format_currency(resumo_periodo['total_receitas']),
+        total_despesas=format_currency(resumo_periodo['total_despesas']),
+        saldo_periodo=format_currency(resumo_periodo['saldo']),
         transacoes=transacoes_json,
+        has_next=(page < total_pages),
+        has_prev=(page > 1),
+        next_page=(page + 1 if page < total_pages else None),
+        prev_page=(page - 1 if page > 1 else None),
+        current_page=page,
+        total_pages=total_pages
     )

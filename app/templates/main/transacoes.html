@@ -10,7 +10,7 @@
 <div class="card shadow-sm mb-4">
     <div class="card-header"><i class="bi bi-funnel-fill me-2"></i>Filtros</div>
     <div class="card-body">
-        <form id="filterForm" method="GET" action="">
+        <form id="filterForm">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label for="date-range-picker" class="form-label">Período</label>
@@ -22,11 +22,11 @@
                 </div>
                 <div class="col-md-3">
                     <label for="tipo" class="form-label">Tipo</label>
-                    <select name="tipo" id="tipo" class="form-select filter-trigger"><option value="Todos">Todos</option><option value="Receita">Receita</option><option value="Despesa">Despesa</option></select>
+                    <select name="tipo" id="tipo" class="form-select"><option value="Todos">Todos</option><option value="Receita">Receita</option><option value="Despesa">Despesa</option></select>
                 </div>
                 <div class="col-md-3">
                     <label for="categoria" class="form-label">Categorias</label>
-                    <select name="categoria" id="categoria" class="form-select filter-trigger" multiple>{% for cat in todas_as_categorias_usuario %}<option value="{{ cat.id }}">{{ cat.nome }}</option>{% endfor %}</select>
+                    <select name="categoria" id="categoria" multiple>{% for cat in user_categories %}<option value="{{ cat.id }}">{{ cat.nome }}</option>{% endfor %}</select>
                 </div>
                 <div class="col-md-3">
                     <label for="search-term" class="form-label">Buscar na Descrição</label>
@@ -38,30 +38,17 @@
 </div>
 
 <div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-table me-2"></i>Transações do Período</span>
-        <div id="loading-spinner" class="spinner-border spinner-border-sm text-primary" role="status" style="display: none;"><span class="visually-hidden">Loading...</span></div>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>Categoria</th><th>Tipo</th><th style="width: 35%;">Descrição</th>
-                    <th>Data</th><th class="text-end">Valor</th><th class="text-end">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="tabela-transacoes-corpo">
-                </tbody>
-        </table>
-    </div>
+    <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-table me-2"></i>Transações do Período</span><div id="loading-spinner" class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+    <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+        <thead><tr><th>Categoria</th><th>Tipo</th><th style="width: 35%;">Descrição</th><th>Data</th><th class="text-end">Valor</th><th class="text-end">Ações</th></tr></thead>
+        <tbody id="tabela-corpo"></tbody>
+    </table></div>
     <div class="card-footer d-flex justify-content-center" id="pagination-controls" style="display: none;">
-        <nav aria-label="Navegação da Tabela">
-            <ul class="pagination mb-0">
-                <li class="page-item" id="prev-page-li"><a class="page-link" href="#" id="prev-page-btn">Anterior</a></li>
-                <li class="page-item disabled"><span class="page-link" id="page-info">Página 1 de 1</span></li>
-                <li class="page-item" id="next-page-li"><a class="page-link" href="#" id="next-page-btn">Próxima</a></li>
-            </ul>
-        </nav>
+        <nav aria-label="Navegação da Tabela"><ul class="pagination mb-0">
+            <li class="page-item" id="prev-page-li"><a class="page-link" href="#" id="prev-page-btn">Anterior</a></li>
+            <li class="page-item disabled"><span class="page-link" id="page-info"></span></li>
+            <li class="page-item" id="next-page-li"><a class="page-link" href="#" id="next-page-btn">Próxima</a></li>
+        </ul></nav>
     </div>
 </div>
 {% include 'includes/modal_transacao.html' %}
@@ -69,6 +56,6 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/transacoes.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/filtros.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/modal_transacao.js') }}" defer></script>
 {% endblock %}
