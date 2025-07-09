@@ -9,15 +9,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnAnoAtual = document.getElementById('btn-ano-atual');
     const exportBtn = document.getElementById('exportBtn');
 
-    let graficoDespesas, graficoReceitas;
     let debounceTimeout;
     let tomSelect; 
 
     // --- FUNÇÃO DE FORMATAÇÃO DE MOEDA ---
-    const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    });
+    const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
     // --- FUNÇÕES DE ATUALIZAÇÃO DA UI ---
     function atualizarCards(data) {
@@ -67,19 +63,11 @@ document.addEventListener('DOMContentLoaded', function () {
         selectedCategories.forEach(catId => params.append('categoria', catId));
 
         const apiUrl = `/api/analises?${params.toString()}`;
-        
-        // DEBUG: Mostra no console do navegador a URL que será chamada
-        console.log("URL da API chamada:", apiUrl);
-        
         exportBtn.href = `/exportar/csv?${params.toString()}`;
 
         try {
             const response = await fetch(apiUrl);
             const data = await response.json();
-
-            // DEBUG: Mostra no console do navegador os dados recebidos
-            console.log("Dados recebidos da API:", data);
-
             if (data.success) {
                 atualizarCards(data);
                 atualizarTabela(data.transacoes);
@@ -92,6 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- INICIALIZAÇÃO E EVENT LISTENERS ---
+    
     if (window.TomSelect) {
         tomSelect = new TomSelect('#categoria', {
             plugins: ['remove_button'],
@@ -102,8 +91,24 @@ document.addEventListener('DOMContentLoaded', function () {
         categoriaSelect.addEventListener('change', atualizarAnalises);
     }
     
+    // --- CORREÇÃO APLICADA AQUI ---
+    // 1. Lemos as datas do HTML como texto.
+    const initialStartDateStr = datePickerInput.dataset.inicio;
+    const initialEndDateStr = datePickerInput.dataset.fim;
+    
+    // 2. Convertemos o texto para Objetos Date do Javascript.
+    // Adicionamos T00:00:00 para evitar problemas de fuso horário.
+    const initialStartDate = new Date(initialStartDateStr + 'T00:00:00');
+    const initialEndDate = new Date(initialEndDateStr + 'T00:00:00');
+
+    // 3. Inicializamos o Litepicker com os Objetos Date corretos.
     const datePicker = new Litepicker({
-        element: datePickerInput, singleMode: false, format: 'DD/MM/YYYY', lang: 'pt-BR',
+        element: datePickerInput,
+        singleMode: false,
+        format: 'DD/MM/YYYY',
+        lang: 'pt-BR',
+        startDate: initialStartDate, // Passamos o objeto Date
+        endDate: initialEndDate,     // Passamos o objeto Date
         dropdowns: { months: true, years: true },
         setup: (picker) => {
             picker.on('selected', () => {
@@ -117,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
         const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
         datePicker.setDateRange(inicioMes, fimMes);
+        atualizarAnalises(); 
     });
 
     btnAnoAtual.addEventListener('click', () => {
@@ -124,6 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const inicioAno = new Date(hoje.getFullYear(), 0, 1);
         const fimAno = new Date(hoje.getFullYear(), 11, 31);
         datePicker.setDateRange(inicioAno, fimAno);
+        atualizarAnalises();
     });
 
     searchTermInput.addEventListener('input', () => {

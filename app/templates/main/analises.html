@@ -15,14 +15,11 @@
                 <div class="col-md-3">
                     <label for="date-range-picker" class="form-label">Período</label>
                     <div class="input-group">
-                        <input id="date-range-picker" type="text" class="form-control" value="{{data_inicio}} a {{data_fim}}">
+                        <input id="date-range-picker" type="text" class="form-control" 
+                               data-inicio="{{ data_inicio }}" data-fim="{{ data_fim }}">
                         <button class="btn btn-outline-secondary" type="button" id="btn-mes-atual" title="Mês Atual">Mês</button>
                         <button class="btn btn-outline-secondary" type="button" id="btn-ano-atual" title="Ano Atual">Ano</button>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <label for="search-term" class="form-label">Buscar na Descrição</label>
-                    <input type="text" id="search-term" name="q" class="form-control" placeholder="Ex: Supermercado..." value="{{ search_term or '' }}">
                 </div>
                 <div class="col-md-3">
                     <label for="tipo" class="form-label">Tipo</label>
@@ -40,6 +37,10 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="col-md-3">
+                    <label for="search-term" class="form-label">Buscar na Descrição</label>
+                    <input type="text" id="search-term" name="q" class="form-control" placeholder="Ex: Supermercado..." value="{{ search_term or '' }}">
+                </div>
             </div>
         </form>
     </div>
@@ -54,28 +55,8 @@
 <div class="card shadow-sm mb-4">
     <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-table me-2"></i>Transações do Período</span><div id="loading-spinner" class="spinner-border spinner-border-sm text-primary" role="status" style="display: none;"><span class="visually-hidden">Loading...</span></div></div>
     <div class="table-responsive"><table class="table table-hover align-middle mb-0">
-        <thead>
-            <tr>
-                <th>Categoria</th>
-                <th>Tipo</th>
-                <th style="width: 40%;">Descrição</th>
-                <th>Data</th>
-                <th class="text-end">Valor</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-transacoes-corpo">
-            {% for transacao in transacoes %}
-            <tr>
-                <td>{{ transacao.categoria_nome }}</td>
-                <td><span class="badge rounded-pill {{ 'text-bg-success' if transacao.tipo == 'Receita' else 'text-bg-danger' }}">{{ transacao.tipo }}</span></td>
-                <td>{{ transacao.descricao }}</td>
-                <td>{{ transacao.data.strftime('%d/%m/%Y') }}</td>
-                <td class="text-end fw-bold {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</td>
-            </tr>
-            {% else %}
-            <tr><td colspan="5" class="text-center text-muted p-4">Nenhuma transação encontrada para os filtros selecionados.</td></tr>
-            {% endfor %}
-        </tbody>
+        <thead><tr><th>Categoria</th><th>Tipo</th><th style="width: 40%;">Descrição</th><th>Data</th><th class="text-end">Valor</th></tr></thead>
+        <tbody id="tabela-transacoes-corpo">{% for transacao in transacoes %}<tr><td>{{ transacao.categoria_nome }}</td><td><span class="badge rounded-pill {{ 'text-bg-success' if transacao.tipo == 'Receita' else 'text-bg-danger' }}">{{ transacao.tipo }}</span></td><td>{{ transacao.descricao }}</td><td>{{ transacao.data.strftime('%d/%m/%Y') }}</td><td class="text-end fw-bold {{ 'text-success' if transacao.tipo == 'Receita' else 'text-danger' }}">{{ transacao.valor|currency }}</td></tr>{% else %}<tr><td colspan="5" class="text-center text-muted p-4">Nenhuma transação encontrada para os filtros selecionados.</td></tr>{% endfor %}</tbody>
     </table></div>
 </div>
 {% endblock %}
