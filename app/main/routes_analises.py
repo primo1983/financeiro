@@ -44,7 +44,8 @@ def analises():
         tipo_filtro=tipo_filtro, categorias_filtro_ids=[int(id) for id in categorias_filtro_ids_str if id],
         search_term=search_term,
         user_categories=todas_as_categorias_usuario,
-        total_receitas=resumo_periodo['total_receitas'], total_despesas=resumo_periodo['total_despesas'],
+        total_receitas=resumo_periodo['total_receitas'], 
+        total_despesas=resumo_periodo['total_despesas'],
         saldo_periodo=resumo_periodo['saldo']
     )
 
@@ -64,24 +65,37 @@ def exportar_csv():
     query_regras = get_transacoes_filtradas_analise(user_id)
     transacoes_filtradas = expandir_transacoes_na_janela(query_regras.all(), data_inicio, data_fim)
     
-    output = io.StringIO(); writer = csv.writer(output, delimiter=';')
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';')
     writer.writerow(['Data', 'Descrição', 'Valor', 'Tipo', 'Categoria', 'Forma de Pagamento'])
     for t in sorted(transacoes_filtradas, key=lambda x: x['data']):
         valor_formatado = f"{t['valor']:.2f}".replace('.', ',')
         writer.writerow([t['data'].strftime('%d/%m/%Y'), t['descricao'], valor_formatado, t['tipo'], t['categoria_nome'], t.get('forma_pagamento', '')])
+    
     output.seek(0)
+    
+    # --- CORREÇÃO APLICADA AQUI ---
+    # Pegamos o conteúdo do arquivo em memória
+    response_data = output.getvalue()
+    # Codificamos para bytes usando 'utf-8-sig', que adiciona o marcador BOM
+    response_bytes = response_data.encode('utf-8-sig')
+
     filename = f"relatorio_{data_inicio.strftime('%Y-%m-%d')}_a_{data_fim.strftime('%Y-%m-%d')}.csv"
-    return Response(output, mimetype="text/csv", headers={"Content-Disposition": f"attachment;filename={filename}"})
+    
+    return Response(
+        response_bytes,
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
+    )
 
 
-# --- ROTA DE API CORRIGIDA ---
 @main_bp.route('/api/analises')
 @login_required
 def get_dados_analise():
     try:
         data_inicio = datetime.strptime(request.args.get('inicio'), '%Y-%m-%d').date()
         data_fim = datetime.strptime(request.args.get('fim'), '%Y-%m-%d').date()
-        page = request.args.get('page', 1, type=int) # Adicionado para consistência
+        page = request.args.get('page', 1, type=int)
         per_page = 20
     except (ValueError, TypeError):
         return jsonify(success=False, error="Datas inválidas ou não fornecidas."), 400
@@ -93,7 +107,6 @@ def get_dados_analise():
     
     transacoes_filtradas.sort(key=lambda x: x['data'], reverse=True)
 
-    # Lógica de paginação manual (igual à da pág. de transações)
     total_items = len(transacoes_filtradas)
     total_pages = (total_items + per_page - 1) // per_page if per_page > 0 else 0
     start = (page - 1) * per_page
@@ -103,18 +116,17 @@ def get_dados_analise():
     transacoes_json = []
     for t in transacoes_paginadas:
         transacoes_json.append({
-            'data_formatada': t['data'].strftime('%d/%m/%Y'), # Enviando com o nome correto
+            'data_formatada': t['data'].strftime('%d/%m/%Y'),
             'tipo': t['tipo'],
             'tipo_badge_class': 'text-bg-success' if t['tipo'] == 'Receita' else 'text-bg-danger',
             'categoria_nome': t['categoria_nome'], 
             'descricao': t['descricao'],
-            'valor_formatado': format_currency(t['valor']), # Enviando com o nome correto
+            'valor_formatado': format_currency(t['valor']),
             'valor_class': 'text-success' if t['tipo'] == 'Receita' else 'text-danger'
         })
     
     return jsonify(
         success=True,
-        # Enviando os valores dos cards já formatados
         total_receitas=format_currency(resumo_periodo['total_receitas']),
         total_despesas=format_currency(resumo_periodo['total_despesas']),
         saldo_periodo=format_currency(resumo_periodo['saldo']),
