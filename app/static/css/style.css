@@ -1,0 +1,68 @@
+/* Estilos para a biblioteca Tom Select */
+.ts-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+[data-bs-theme="dark"] .ts-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23dee2e6' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* Estilos de Layout que estavam em base.html */
+:root, [data-bs-theme="light"] {
+    --sidebar-bg: #f8f9fa; 
+    --sidebar-border: #dee2e6;
+    --main-content-bg: #e9ecef; 
+    --card-bg: #ffffff;
+}
+[data-bs-theme="dark"] {
+    --sidebar-bg: #212529; 
+    --sidebar-border: #343a40;
+    --main-content-bg: #121212; 
+    --card-bg: #212529;
+}
+[data-bs-theme="dark"] .list-group-item { background-color: var(--sidebar-bg); border-color: var(--sidebar-border); }
+[data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select { background-color: #343a40; color: #dee2e6; border-color: #495057; }
+[data-bs-theme="dark"] .card, [data-bs-theme="dark"] .modal-content { background-color: var(--card-bg); }
+[data-bs-theme="dark"] .table-hover > tbody > tr:hover > * { --bs-table-hover-bg: #343a40; }
+[data-bs-theme="dark"] .bg-body-tertiary { background-color: var(--bs-tertiary-bg) !important; }
+
+body { 
+    overflow-x: hidden; 
+    background-color: var(--main-content-bg); 
+}
+#wrapper { 
+    display: flex; 
+    align-items: flex-start; 
+}
+#sidebar-wrapper { 
+    width: 260px; 
+    position: sticky; 
+    top: 0; 
+    height: 100vh; 
+    background-color: var(--sidebar-bg); 
+    border-right: 1px solid var(--sidebar-border); 
+}
+#page-content-wrapper { 
+    flex-grow: 1; 
+    width: calc(100% - 260px); 
+}
+.main-content-container { 
+    background-color: var(--card-bg); 
+    border-radius: .5rem; 
+}
+@media (max-width: 991.98px) { 
+    #sidebar-wrapper { 
+        position: fixed; 
+        margin-left: -260px; 
+        transition: margin .25s ease-out; 
+        z-index: 1030;
+    } 
+    #wrapper.toggled #sidebar-wrapper { 
+        margin-left: 0; 
+    } 
+    #page-content-wrapper { 
+        width: 100%; 
+    } 
+}

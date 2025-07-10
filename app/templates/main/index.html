@@ -3,12 +3,8 @@
 
 {% block content %}
 <div class="row g-4">
-    <div class="col-lg-7">
-        <div class="d-grid mb-4">
-            <button type="button" id="openAddModalBtn" class="btn btn-primary btn-lg py-3">
-                <i class="bi bi-plus-circle-fill me-2"></i> Adicionar Nova Transação
-            </button>
-        </div>
+
+    <div class="col-lg-7 order-2 order-lg-1">
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-list-ol me-2"></i>Últimas 10 Transações</h5>
@@ -29,11 +25,11 @@
                             <span class="d-md-none fw-bold">Categoria: </span>{{ transacao.categoria_nome }}
                         </div>
                         <div class="col-md-4">
-                            <div class="fw-bold">
-                                {% if transacao.recorrencia %}
-                                    <i class="bi bi-arrow-repeat me-2 text-primary" title="Transação Recorrente"></i>
-                                {% endif %}
+                            <div>
                                 {{ transacao.descricao }}
+                                {% if transacao.recorrencia %}
+                                    <i class="bi bi-arrow-repeat ms-2 text-primary" title="Transação Recorrente"></i>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-2 text-md-center">
@@ -56,7 +52,13 @@
         </div>
     </div>
 
-    <div class="col-lg-5">
+    <div class="col-lg-5 order-1 order-lg-2">
+        <div class="d-grid mb-4">
+            <button type="button" id="openAddModalBtn" class="btn btn-primary btn-lg py-3">
+                <i class="bi bi-plus-circle-fill me-2"></i> Adicionar Nova Transação
+            </button>
+        </div>
+
         <div class="card text-white bg-primary shadow-sm mb-4">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
@@ -110,16 +112,16 @@
             </div>
         </div>
         
-        <div class="card shadow-sm bg-body-secondary">
+        <div class="card shadow-sm bg-info text-white">
             <div class="card-body p-2">
                  <div class="d-flex justify-content-between align-items-center px-2">
                     <div class="text-center flex-grow-1">
-                        <h6 class="card-subtitle text-muted mb-1">Saldo do Mês</h6>
+                        <h6 class="card-subtitle mb-1">Saldo do Mês</h6>
                         <h5 class="fw-bold mb-0" id="saldo_mes-valor">
                             {% if saldos_visibilidade.get('saldo_mes', True) %}{{ saldo_mes|currency }}{% else %}R$ ••••••{% endif %}
                         </h5>
                     </div>
-                    <button class="btn btn-sm btn-link text-body-secondary p-0 toggle-saldo-btn" title="Alternar visibilidade" data-card-name="saldo_mes" data-card-value="{{ saldo_mes|currency }}">
+                    <button class="btn btn-sm btn-link text-white p-0 toggle-saldo-btn" title="Alternar visibilidade" data-card-name="saldo_mes" data-card-value="{{ saldo_mes|currency }}">
                         <i class="bi {% if saldos_visibilidade.get('saldo_mes', True) %}bi-eye-slash{% else %}bi-eye{% endif %} fs-5" id="saldo_mes-icon"></i>
                     </button>
                 </div>

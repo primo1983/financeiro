@@ -1,6 +1,8 @@
 {% extends 'layout_app.html' %}
 {% block title %}Transações{% endblock %}
 
+{% block styles %}{{ super() }}{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0">Histórico de Transações</h3>
@@ -10,7 +12,7 @@
 {% include 'includes/_filter_form.html' %}
 
 <div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-table me-2"></i>Transações do Período</span><div id="loading-spinner" class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+    <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-table me-2"></i>Transações do Período</span><div id="loading-spinner" class="spinner-border spinner-border-sm text-primary" role="status" style="display: none;"><span class="visually-hidden">Loading...</span></div></div>
     <div class="table-responsive"><table class="table table-hover align-middle mb-0">
         <thead><tr><th>Categoria</th><th>Tipo</th><th style="width: 35%;">Descrição</th><th>Data</th><th class="text-end">Valor</th><th class="text-end">Ações</th></tr></thead>
         <tbody id="tabela-corpo"></tbody>

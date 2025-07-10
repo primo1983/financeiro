@@ -11,31 +11,11 @@
     <link href="{{ url_for('static', filename='css/bootstrap-icons.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/litepicker.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     <script src="{{ url_for('static', filename='js/imask.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
     
-    <style>
-      :root, [data-bs-theme="light"] {
-        --sidebar-bg: #f8f9fa; --sidebar-border: #dee2e6;
-        --main-content-bg: #e9ecef; --card-bg: #ffffff;
-      }
-      [data-bs-theme="dark"] {
-        --sidebar-bg: #212529; --sidebar-border: #343a40;
-        --main-content-bg: #121212; --card-bg: #212529;
-        .list-group-item { background-color: var(--sidebar-bg); border-color: var(--sidebar-border); }
-        .form-control, .form-select { background-color: #343a40; color: #dee2e6; border-color: #495057; }
-        .card, .modal-content { background-color: var(--card-bg); }
-        .table-hover > tbody > tr:hover > * { --bs-table-hover-bg: #343a40; }
-        .bg-body-tertiary { background-color: var(--bs-tertiary-bg) !important; }
-      }
-      body { overflow-x: hidden; background-color: var(--main-content-bg); }
-      #wrapper { display: flex; align-items: flex-start; }
-      #sidebar-wrapper { width: 260px; position: sticky; top: 0; height: 100vh; background-color: var(--sidebar-bg); border-right: 1px solid var(--sidebar-border); }
-      #page-content-wrapper { flex-grow: 1; width: calc(100% - 260px); }
-      .main-content-container { background-color: var(--card-bg); border-radius: .5rem; }
-      @media (max-width: 991.98px) { #sidebar-wrapper { position: fixed; margin-left: -260px; transition: margin .25s ease-out; z-index: 1030;} #wrapper.toggled #sidebar-wrapper { margin-left: 0; } #page-content-wrapper { width: 100%; } }
-    </style>
     {% block styles %}{% endblock %}
 </head>
 <body>

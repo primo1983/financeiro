@@ -1,6 +1,10 @@
 {% extends 'layout_app.html' %}
 {% block title %}Análises e Relatórios{% endblock %}
 
+{% block styles %}
+{{ super() }}
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0">Análise Dinâmica</h3>
@@ -16,17 +20,30 @@
 </div>
 
 <div class="card shadow-sm mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-table me-2"></i>Transações do Período</span><div id="loading-spinner" class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
-    <div class="table-responsive"><table class="table table-hover align-middle mb-0">
-        <thead><tr><th>Categoria</th><th>Tipo</th><th style="width: 40%;">Descrição</th><th>Data</th><th class="text-end">Valor</th></tr></thead>
-        <tbody id="tabela-corpo"></tbody>
-    </table></div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-table me-2"></i>Transações do Período</span>
+        <div id="loading-spinner" class="spinner-border spinner-border-sm text-primary" role="status" style="display: none;"><span class="visually-hidden">Loading...</span></div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Categoria</th><th>Tipo</th><th style="width: 40%;">Descrição</th>
+                    <th>Data</th><th class="text-end">Valor</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-corpo">
+                </tbody>
+        </table>
+    </div>
     <div class="card-footer d-flex justify-content-center" id="pagination-controls" style="display: none;">
-        <nav aria-label="Navegação da Tabela"><ul class="pagination mb-0">
-            <li class="page-item" id="prev-page-li"><a class="page-link" href="#" id="prev-page-btn">Anterior</a></li>
-            <li class="page-item disabled"><span class="page-link" id="page-info"></span></li>
-            <li class="page-item" id="next-page-li"><a class="page-link" href="#" id="next-page-btn">Próxima</a></li>
-        </ul></nav>
+        <nav aria-label="Navegação da Tabela">
+            <ul class="pagination mb-0">
+                <li class="page-item" id="prev-page-li"><a class="page-link" href="#" id="prev-page-btn">Anterior</a></li>
+                <li class="page-item disabled"><span class="page-link" id="page-info"></span></li>
+                <li class="page-item" id="next-page-li"><a class="page-link" href="#" id="next-page-btn">Próxima</a></li>
+            </ul>
+        </nav>
     </div>
 </div>
 {% endblock %}
