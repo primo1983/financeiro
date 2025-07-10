@@ -1,27 +1,34 @@
 document.addEventListener('DOMContentLoaded', function () {
     const filterForm = document.getElementById('filterForm');
-    if (!filterForm) return; 
+    if (!filterForm) return;
 
     // --- VARIÁVEIS GLOBAIS E ELEMENTOS DO DOM ---
     const loadingSpinner = document.getElementById('loading-spinner');
     const datePickerInput = document.getElementById('date-range-picker');
     const pageUrl = window.location.pathname; 
     const apiEndpoint = pageUrl.replace('/view', '').replace('/analises', '/api/analises').replace('/transacoes', '/api/transacoes');
+    
+    const searchTermInput = filterForm.q;
+    const tipoSelect = filterForm.tipo;
+    const categoriaSelect = filterForm.categoria;
 
+    const btnMesAtual = document.getElementById('btn-mes-atual');
+    const btnAnoAtual = document.getElementById('btn-ano-atual');
+    const paginationControls = document.getElementById('pagination-controls');
+    
     let debounceTimeout;
     let tomSelect;
     let currentPage = 1;
 
     // --- FUNÇÕES DE ATUALIZAÇÃO DA UI ---
-    function atualizarCards(data) {
-        // Esta função agora recebe os dados já formatados do backend
-        const receitasEl = document.getElementById('total-receitas-valor');
-        const despesasEl = document.getElementById('total-despesas-valor');
-        const saldoEl = document.getElementById('saldo-periodo-valor');
-
-        if(receitasEl) receitasEl.textContent = data.total_receitas;
-        if(despesasEl) despesasEl.textContent = data.total_despesas;
-        if(saldoEl) saldoEl.textContent = data.saldo_periodo;
+    function atualizarUICompleta(data) {
+        if (document.getElementById('total-receitas-valor')) {
+            document.getElementById('total-receitas-valor').textContent = data.total_receitas;
+            document.getElementById('total-despesas-valor').textContent = data.total_despesas;
+            document.getElementById('saldo-periodo-valor').textContent = data.saldo_periodo;
+        }
+        atualizarTabela(data.transacoes);
+        atualizarPaginacao(data);
     }
 
     function atualizarTabela(transacoes) {
@@ -41,7 +48,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     `<button type="button" class="btn btn-sm btn-outline-warning edit-btn" title="Editar" data-dados='${JSON.stringify(t)}'><i class="bi bi-pencil-square"></i></button>
                      ${t.recorrencia ? `<form action="/transacoes/excluir/${t.id}" method="post" class="d-inline" onsubmit="return confirm('Apagar a regra e TODAS as suas ocorrências futuras?');"><input type="hidden" name="csrf_token" value="${t.csrf_token}"/><button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Regra"><i class="bi bi-trash3"></i></button></form><form action="/transacoes/ignorar" method="post" class="d-inline" onsubmit="return confirm('Deseja ignorar apenas esta ocorrência?');"><input type="hidden" name="csrf_token" value="${t.csrf_token}"/><input type="hidden" name="transacao_id" value="${t.id}"><input type="hidden" name="data_excecao" value="${t.data_iso}"><button type="submit" class="btn btn-sm btn-outline-secondary" title="Ignorar ocorrência"><i class="bi bi-calendar-x"></i></button></form>` : `<form action="/transacoes/excluir/${t.id}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza?');"><input type="hidden" name="csrf_token" value="${t.csrf_token}"/><button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash3"></i></button></form>`}`;
             }
-
             const linha = `
                 <tr>
                     <td>${t.categoria_nome}</td>
@@ -56,13 +62,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function atualizarPaginacao(data) {
-        // ... (código igual ao anterior)
-    }
-
-    function atualizarUICompleta(data) {
-        atualizarCards(data);
-        atualizarTabela(data.transacoes);
-        atualizarPaginacao(data);
+        if (!paginationControls) return;
+        const pageInfo = document.getElementById('page-info');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        
+        pageInfo.textContent = `Página ${data.current_page} de ${data.total_pages}`;
+        prevPageBtn.parentElement.classList.toggle('disabled', !data.has_prev);
+        nextPageBtn.parentElement.classList.toggle('disabled', !data.has_next);
+        prevPageBtn.dataset.page = data.prev_page;
+        nextPageBtn.dataset.page = data.next_page;
+        
+        // Lógica chave para esconder/mostrar a paginação inteira
+        paginationControls.style.display = data.total_pages > 1 ? 'flex' : 'none';
     }
 
     // --- FUNÇÃO PRINCIPAL DE FETCH ---
@@ -86,9 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         const url = `${apiEndpoint}?${params.toString()}`;
         const exportBtn = document.getElementById('exportBtn');
-        if (exportBtn) {
-            exportBtn.href = `/exportar/csv?${params.toString()}`;
-        }
+        if (exportBtn) { exportBtn.href = `/exportar/csv?${params.toString()}`; }
         
         try {
             const response = await fetch(url);
@@ -110,29 +120,28 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     filterForm.addEventListener('submit', (e) => { e.preventDefault(); atualizarFiltros(1); });
-    filterForm.tipo.addEventListener('change', () => atualizarFiltros(1));
+    tipoSelect.addEventListener('change', () => atualizarFiltros(1));
     tomSelect.on('change', () => atualizarFiltros(1));
-    filterForm.q.addEventListener('input', () => {
+    searchTermInput.addEventListener('input', () => {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
-            if (filterForm.q.value.length === 0 || filterForm.q.value.length >= 2) {
+            if (searchTermInput.value.length === 0 || searchTermInput.value.length >= 2) {
                 atualizarFiltros(1);
             }
         }, 500);
     });
 
-    document.getElementById('btn-mes-atual')?.addEventListener('click', () => {
+    btnMesAtual?.addEventListener('click', () => {
         const hoje = new Date();
         datePicker.setDateRange(new Date(hoje.getFullYear(), hoje.getMonth(), 1), new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0));
         atualizarFiltros(1); 
     });
-    document.getElementById('btn-ano-atual')?.addEventListener('click', () => {
+    btnAnoAtual?.addEventListener('click', () => {
         const hoje = new Date();
         datePicker.setDateRange(new Date(hoje.getFullYear(), 0, 1), new Date(hoje.getFullYear(), 11, 31));
         atualizarFiltros(1);
     });
 
-    // Listeners da paginação (se existirem)
     document.getElementById('prev-page-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
         if (!e.currentTarget.parentElement.classList.contains('disabled')) {
