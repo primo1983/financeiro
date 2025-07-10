@@ -6,6 +6,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from app import app
 
 load_dotenv()
 
