@@ -15,10 +15,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnMesAtual = document.getElementById('btn-mes-atual');
     const btnAnoAtual = document.getElementById('btn-ano-atual');
     const paginationControls = document.getElementById('pagination-controls');
+    const tableHeader = document.querySelector('table thead');
     
     let debounceTimeout;
     let tomSelect;
     let currentPage = 1;
+    // --- NOVO: Variável para guardar o estado da ordenação ---
+    let currentSort = { by: 'data', order: 'desc' };
 
     // --- FUNÇÕES DE ATUALIZAÇÃO DA UI ---
     function atualizarUICompleta(data) {
@@ -29,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         atualizarTabela(data.transacoes);
         atualizarPaginacao(data);
+        updateSortIcons(); // Atualiza os ícones após cada carga
     }
 
     function atualizarTabela(transacoes) {
@@ -50,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const linha = `
                 <tr>
-                    <td>${t.categoria_nome}</td>
+                    <td class="hide-on-mobile">${t.categoria_nome}</td>
                     <td><span class="badge rounded-pill ${t.tipo_badge_class}">${t.tipo}</span></td>
                     <td>${t.descricao} ${t.recorrencia && !t.is_skipped && pageUrl.includes('/transacoes') ? '<span class="ms-1 text-primary-emphasis fw-normal" title="Recorrente"><i class="bi bi-arrow-repeat"></i></span>' : ''}</td>
                     <td>${t.data_formatada}</td>
@@ -72,12 +76,25 @@ document.addEventListener('DOMContentLoaded', function () {
         nextPageBtn.parentElement.classList.toggle('disabled', !data.has_next);
         prevPageBtn.dataset.page = data.prev_page;
         nextPageBtn.dataset.page = data.next_page;
-        
-        // Lógica chave para esconder/mostrar a paginação inteira
         paginationControls.style.display = data.total_pages > 1 ? 'flex' : 'none';
     }
 
-    // --- FUNÇÃO PRINCIPAL DE FETCH ---
+    // --- NOVA FUNÇÃO PARA ATUALIZAR OS ÍCONES DE ORDENAÇÃO ---
+    function updateSortIcons() {
+        if (!tableHeader) return;
+        tableHeader.querySelectorAll('.sortable-header').forEach(header => {
+            const iconSpan = header.querySelector('.sort-icon');
+            if (header.dataset.sortBy === currentSort.by) {
+                header.classList.add('active');
+                iconSpan.innerHTML = currentSort.order === 'asc' ? '<i class="bi bi-arrow-up"></i>' : '<i class="bi bi-arrow-down"></i>';
+            } else {
+                header.classList.remove('active');
+                iconSpan.innerHTML = '';
+            }
+        });
+    }
+
+    // --- FUNÇÃO PRINCIPAL DE FETCH ATUALIZADA ---
     async function atualizarFiltros(page = 1) {
         if (loadingSpinner) loadingSpinner.style.display = 'block';
         currentPage = page;
@@ -90,7 +107,9 @@ document.addEventListener('DOMContentLoaded', function () {
             fim: fim.toJSDate().toISOString().split('T')[0],
             q: filterForm.q.value,
             tipo: filterForm.tipo.value,
-            page: currentPage
+            page: currentPage,
+            sort_by: currentSort.by,
+            order: currentSort.order
         });
         
         const selectedCategories = tomSelect.items;
@@ -141,19 +160,29 @@ document.addEventListener('DOMContentLoaded', function () {
         datePicker.setDateRange(new Date(hoje.getFullYear(), 0, 1), new Date(hoje.getFullYear(), 11, 31));
         atualizarFiltros(1);
     });
+    
+    // --- NOVO LISTENER PARA OS CABEÇALHOS DA TABELA ---
+    if (tableHeader) {
+        tableHeader.addEventListener('click', (e) => {
+            const header = e.target.closest('.sortable-header');
+            if (!header) return;
 
-    document.getElementById('prev-page-btn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!e.currentTarget.parentElement.classList.contains('disabled')) {
-            atualizarFiltros(parseInt(e.currentTarget.dataset.page));
-        }
-    });
-    document.getElementById('next-page-btn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (!e.currentTarget.parentElement.classList.contains('disabled')) {
-            atualizarFiltros(parseInt(e.currentTarget.dataset.page));
-        }
-    });
+            e.preventDefault();
+            const sortBy = header.dataset.sortBy;
+
+            if (currentSort.by === sortBy) {
+                currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.by = sortBy;
+                currentSort.order = 'desc';
+            }
+            
+            atualizarFiltros(1);
+        });
+    }
+
+    document.getElementById('prev-page-btn')?.addEventListener('click', (e) => { e.preventDefault(); if (!e.currentTarget.parentElement.classList.contains('disabled')) { atualizarFiltros(parseInt(e.currentTarget.dataset.page)); } });
+    document.getElementById('next-page-btn')?.addEventListener('click', (e) => { e.preventDefault(); if (!e.currentTarget.parentElement.classList.contains('disabled')) { atualizarFiltros(parseInt(e.currentTarget.dataset.page)); } });
 
     // Carga inicial dos dados
     atualizarFiltros(1);

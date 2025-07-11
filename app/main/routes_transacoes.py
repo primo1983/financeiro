@@ -29,16 +29,11 @@ def listar_transacoes():
     todas_as_categorias_usuario = Categoria.query.filter_by(user_id=current_user.id).order_by(Categoria.nome).all()
     form = TransacaoForm()
 
-    query_regras = get_transacoes_filtradas_analise(current_user.id)
-    # A carga inicial é feita pelo JavaScript, mas podemos pré-carregar se quisermos
-    transacoes_iniciais = [] 
-
     return render_template('main/transacoes.html', 
         data_inicio=data_inicio.strftime('%Y-%m-%d'), 
         data_fim=data_fim.strftime('%Y-%m-%d'),
         user_categories=todas_as_categorias_usuario,
-        form=form,
-        transacoes_iniciais=transacoes_iniciais
+        form=form
     )
 
 @main_bp.route('/api/transacoes')
@@ -49,15 +44,29 @@ def get_dados_transacoes():
         data_fim = datetime.strptime(request.args.get('fim'), '%Y-%m-%d').date()
         page = request.args.get('page', 1, type=int)
         per_page = 20
+        sort_by = request.args.get('sort_by', 'data')
+        order = request.args.get('order', 'desc')
     except (ValueError, TypeError):
         return jsonify(success=False, error="Parâmetros inválidos."), 400
 
     query_regras = get_transacoes_filtradas_analise(current_user.id)
-    regras_filtradas = query_regras.order_by(Transacao.data.desc()).all()
+    regras_filtradas = query_regras.all()
     
     transacoes_expandidas = expandir_transacoes_na_janela(regras_filtradas, data_inicio, data_fim)
-    transacoes_expandidas.sort(key=lambda x: x['data'], reverse=True)
     
+    # --- LÓGICA DE ORDENAÇÃO APLICADA AQUI ---
+    # Mapeia os nomes das colunas para chaves seguras e tipos corretos
+    key_map = {
+        'categoria_nome': lambda t: (t.get('categoria_nome') or '').lower(),
+        'tipo': lambda t: (t.get('tipo') or '').lower(),
+        'descricao': lambda t: (t.get('descricao') or '').lower(),
+        'data': lambda t: t.get('data', date.min),
+        'valor': lambda t: t.get('valor', 0.0)
+    }
+    sort_key_func = key_map.get(sort_by, key_map['data'])
+    transacoes_expandidas.sort(key=sort_key_func, reverse=(order == 'desc'))
+    
+    # Lógica de paginação
     total_items = len(transacoes_expandidas)
     total_pages = (total_items + per_page - 1) // per_page if per_page > 0 else 0
     start = (page - 1) * per_page

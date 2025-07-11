@@ -12,30 +12,9 @@
 {% include 'includes/_filter_form.html' %}
 
 <div class="row g-4 mb-4">
-    <div class="col-6 col-md-4 order-2 order-md-1">
-        <div class="card text-white bg-success h-100">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Receitas no Período</h6>
-                <h4 class="card-title fw-bold mb-0" id="total-receitas-valor">-</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 order-2 order-md-2">
-        <div class="card text-white bg-danger h-100">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Despesas no Período</h6>
-                <h4 class="card-title fw-bold mb-0" id="total-despesas-valor">-</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-md-4 order-1 order-md-3">
-        <div class="card text-white bg-primary h-100">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2">Saldo do Período</h6>
-                <h4 class="card-title fw-bold mb-0" id="saldo-periodo-valor">-</h4>
-            </div>
-        </div>
-    </div>
+    <div class="col-6 col-md-4 order-2 order-md-1"><div class="card text-white bg-success h-100"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Receitas no Período</h6><h4 class="card-title fw-bold mb-0" id="total-receitas-valor">-</h4></div></div></div>
+    <div class="col-6 col-md-4 order-2 order-md-2"><div class="card text-white bg-danger h-100"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Despesas no Período</h6><h4 class="card-title fw-bold mb-0" id="total-despesas-valor">-</h4></div></div></div>
+    <div class="col-12 col-md-4 order-1 order-md-3"><div class="card text-white bg-primary h-100"><div class="card-body text-center"><h6 class="card-subtitle mb-2">Saldo do Período</h6><h4 class="card-title fw-bold mb-0" id="saldo-periodo-valor">-</h4></div></div></div>
 </div>
 
 <div class="card shadow-sm mb-4">
@@ -47,11 +26,11 @@
         <table class="table table-hover align-middle mb-0">
             <thead>
                 <tr>
-                    <th class="hide-on-mobile">Categoria</th>
-                    <th>Tipo</th>
-                    <th style="width: 40%;">Descrição</th>
-                    <th>Data</th>
-                    <th class="text-end">Valor</th>
+                    <th class="hide-on-mobile"><a href="#" class="text-decoration-none text-body fw-bold sortable-header" data-sort-by="categoria_nome">Categoria <span class="sort-icon"></span></a></th>
+                    <th><a href="#" class="text-decoration-none text-body fw-bold sortable-header" data-sort-by="tipo">Tipo <span class="sort-icon"></span></a></th>
+                    <th style="width: 40%;"><a href="#" class="text-decoration-none text-body fw-bold sortable-header" data-sort-by="descricao">Descrição <span class="sort-icon"></span></a></th>
+                    <th><a href="#" class="text-decoration-none text-body fw-bold sortable-header active" data-sort-by="data">Data <span class="sort-icon"><i class="bi bi-arrow-down"></i></span></a></th>
+                    <th class="text-end"><a href="#" class="text-decoration-none text-body fw-bold sortable-header" data-sort-by="valor">Valor <span class="sort-icon"></span></a></th>
                 </tr>
             </thead>
             <tbody id="tabela-corpo">
