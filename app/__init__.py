@@ -25,6 +25,8 @@ def create_app():
         SQLALCHEMY_TRACK_MODIFICATIONS=False
     )
     
+    import locale
+
     # O locale pode ser configurado uma vez aqui.
     try:
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -32,7 +34,11 @@ def create_app():
         try:
             locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
         except locale.Error:
-            print("Atenção: Não foi possível definir o locale para pt_BR. A formatação de moeda pode não funcionar como esperado.")
+            try:
+                locale.setlocale(locale.LC_ALL, 'C.UTF-8')  # Fallback seguro
+                print("⚠️ Locale pt_BR e Portuguese_Brazil indisponíveis. Usando C.UTF-8.")
+            except locale.Error:
+                print("❌ Nenhum locale disponível. A formatação de moeda pode falhar.")
 
     db.init_app(app)
     csrf.init_app(app)
