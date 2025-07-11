@@ -79,3 +79,10 @@ body {
 [data-bs-theme="dark"] .login-body {
     background-color: #000;
 }
+/* Regra para esconder elementos em telas de telemóvel */
+/* A regra é ativada para qualquer tela com largura menor que 768px */
+@media (max-width: 767.98px) {
+    .hide-on-mobile {
+        display: none !important;
+    }
+}
