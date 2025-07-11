@@ -3,7 +3,6 @@ from . import auth_bp
 from app import db
 from app.models import Usuario
 from app.forms import LoginForm, PerfilForm
-from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 import functools
 
@@ -28,8 +27,15 @@ def login():
         if user is None or not user.check_password(form.password.data):
             flash('Nome de usuário ou senha incorretos.', 'danger')
         else:
-            login_user(user, remember=True)
-            return redirect(url_for('main.index'))
+            # --- LÓGICA ATUALIZADA AQUI ---
+            # O 'remember' agora depende do que o usuário marcou no formulário.
+            login_user(user, remember=form.remember_me.data)
+            
+            # Redireciona para a próxima página ou para o index
+            next_page = request.args.get('next')
+            if not next_page or not next_page.startswith('/'):
+                next_page = url_for('main.index')
+            return redirect(next_page)
             
     return render_template('auth/login.html', form=form)
 
@@ -51,7 +57,6 @@ def perfil():
             flash('A senha atual está incorreta para salvar as alterações.', 'danger')
         else:
             user.email = form.email.data
-            # A troca de tema é tratada via AJAX, não precisa estar aqui.
             
             if form.nova_senha.data:
                 user.set_password(form.nova_senha.data)
