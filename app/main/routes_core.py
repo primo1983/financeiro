@@ -4,7 +4,7 @@ from . import main_bp
 from app import db
 from app.models import Usuario, Transacao, Categoria
 from app.forms import TransacaoForm
-from app.utils import expandir_transacoes_na_janela, calcular_resumo_financeiro
+from app.utils import expandir_transacoes_na_janela, calcular_resumo_financeiro, is_mobile_user_agent
 from flask_login import login_required, current_user
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -54,12 +54,7 @@ def toggle_card_visibility():
     user = db.session.get(Usuario, current_user.id)
     
     if not isinstance(user.saldos_visibilidade, dict):
-        user.saldos_visibilidade = {
-            "saldo_atual": True,
-            "receita_mes": True,
-            "despesa_mes": True,
-            "saldo_mes": True
-        }
+        user.saldos_visibilidade = { "saldo_atual": True, "receita_mes": True, "despesa_mes": True, "saldo_mes": True }
 
     current_state = user.saldos_visibilidade.get(card_name, True)
     user.saldos_visibilidade[card_name] = not current_state
@@ -69,9 +64,32 @@ def toggle_card_visibility():
     
     return jsonify(success=True, card=card_name, newState=(not current_state))
 
-# Rota para servir o Service Worker com o cabeçalho de permissão correto
 @main_bp.route('/sw.js')
 def service_worker():
     response = send_from_directory('static', 'sw.js')
     response.headers['Service-Worker-Allowed'] = '/'
     return response
+
+# --- NOVA ROTA ADICIONADA ---
+@main_bp.route('/manifest.webmanifest')
+def webmanifest():
+    manifest_data = {
+        "name": "Minhas Finanças",
+        "short_name": "Finanças",
+        "description": "Sua aplicação pessoal de gestão financeira.",
+        "start_url": url_for('main.index', _external=True),
+        "background_color": "#ffffff",
+        "theme_color": "#0d6efd",
+        "icons": [
+            { "src": url_for('static', filename='icons/icon-192x192.png', _external=True), "sizes": "192x192", "type": "image/png" },
+            { "src": url_for('static', filename='icons/icon-512x512.png', _external=True), "sizes": "512x512", "type": "image/png" }
+        ]
+    }
+
+    # Lógica condicional para o modo de display
+    if is_mobile_user_agent(request):
+        manifest_data['display'] = 'standalone'
+    else:
+        manifest_data['display'] = 'browser'
+
+    return jsonify(manifest_data)

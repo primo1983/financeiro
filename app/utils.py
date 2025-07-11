@@ -1,9 +1,10 @@
 import locale
+import re
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from flask import request, flash
 from app.models import ExcecaoTransacao, Transacao, Categoria
-from sqlalchemy import func, and_
+from sqlalchemy import func
 from app import db
 from flask_login import current_user
 
@@ -64,7 +65,6 @@ def calcular_resumo_financeiro(lista_transacoes):
     return {"total_receitas": total_receitas, "total_despesas": total_despesas, "saldo": total_receitas - total_despesas, "receitas_por_categoria": receitas_por_cat, "despesas_por_categoria": despesas_por_cat}
 
 def get_transacoes_filtradas_analise(user_id):
-    """Função auxiliar que monta a query inicial de transações com base nos filtros da request."""
     tipo_filtro = request.args.get('tipo', 'Todos')
     categorias_filtro_ids_str = request.args.getlist('categoria')
     search_term = request.args.get('q', '').strip()
@@ -81,3 +81,10 @@ def get_transacoes_filtradas_analise(user_id):
         except ValueError:
             flash('ID de categoria inválido recebido.', 'warning')
     return query
+
+# --- FUNÇÃO ADICIONADA ---
+def is_mobile_user_agent(request):
+    """Verifica o User-Agent da requisição para detetar se é um dispositivo móvel."""
+    user_agent = request.headers.get('User-Agent', '').lower()
+    mobile_pattern = re.compile(r'android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini')
+    return bool(mobile_pattern.search(user_agent))

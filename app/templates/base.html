@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Minhas Finanças{% endblock %}</title>
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23198754'/><text x='50%' y='53%' dominant-baseline='middle' text-anchor='middle' font-size='75' fill='white' font-weight='bold'>$</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,...">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <link rel="manifest" href="{{ url_for('main.webmanifest') }}">
+    
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/bootstrap-icons.min.css') }}" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/litepicker.css') }}">
-    <link href="{{ url_for('static', filename='css/tom-select.bootstrap5.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     {% block styles %}{% endblock %}
@@ -21,14 +22,9 @@
     {% block body_content %}{% endblock %}
     
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/imask.min.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/litepicker.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/tom-select.complete.min.js') }}" defer></script>
-    
-    <script src="{{ url_for('static', filename='js/form_handler.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/pwa_loader.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/pwa_install.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/form_handler.js') }}" defer></script>
     
     {% block scripts %}{% endblock %}
 </body>
