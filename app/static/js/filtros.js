@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const filterForm = document.getElementById('filterForm');
     if (!filterForm) return;
 
-    // --- VARIÁVEIS GLOBAIS E ELEMENTOS DO DOM ---
     const loadingSpinner = document.getElementById('loading-spinner');
     const datePickerInput = document.getElementById('date-range-picker');
     const pageUrl = window.location.pathname; 
@@ -11,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchTermInput = filterForm.q;
     const tipoSelect = filterForm.tipo;
     const categoriaSelect = filterForm.categoria;
-
     const btnMesAtual = document.getElementById('btn-mes-atual');
     const btnAnoAtual = document.getElementById('btn-ano-atual');
     const paginationControls = document.getElementById('pagination-controls');
@@ -20,10 +18,8 @@ document.addEventListener('DOMContentLoaded', function () {
     let debounceTimeout;
     let tomSelect;
     let currentPage = 1;
-    // --- NOVO: Variável para guardar o estado da ordenação ---
     let currentSort = { by: 'data', order: 'desc' };
 
-    // --- FUNÇÕES DE ATUALIZAÇÃO DA UI ---
     function atualizarUICompleta(data) {
         if (document.getElementById('total-receitas-valor')) {
             document.getElementById('total-receitas-valor').textContent = data.total_receitas;
@@ -32,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         atualizarTabela(data.transacoes);
         atualizarPaginacao(data);
-        updateSortIcons(); // Atualiza os ícones após cada carga
+        updateSortIcons();
     }
 
     function atualizarTabela(transacoes) {
@@ -70,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const pageInfo = document.getElementById('page-info');
         const prevPageBtn = document.getElementById('prev-page-btn');
         const nextPageBtn = document.getElementById('next-page-btn');
-        
         pageInfo.textContent = `Página ${data.current_page} de ${data.total_pages}`;
         prevPageBtn.parentElement.classList.toggle('disabled', !data.has_prev);
         nextPageBtn.parentElement.classList.toggle('disabled', !data.has_next);
@@ -79,7 +74,6 @@ document.addEventListener('DOMContentLoaded', function () {
         paginationControls.style.display = data.total_pages > 1 ? 'flex' : 'none';
     }
 
-    // --- NOVA FUNÇÃO PARA ATUALIZAR OS ÍCONES DE ORDENAÇÃO ---
     function updateSortIcons() {
         if (!tableHeader) return;
         tableHeader.querySelectorAll('.sortable-header').forEach(header => {
@@ -94,14 +88,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- FUNÇÃO PRINCIPAL DE FETCH ATUALIZADA ---
     async function atualizarFiltros(page = 1) {
         if (loadingSpinner) loadingSpinner.style.display = 'block';
         currentPage = page;
         const inicio = datePicker.getStartDate();
         const fim = datePicker.getEndDate();
         if (!inicio || !fim) { if (loadingSpinner) loadingSpinner.style.display = 'none'; return; }
-        
         const params = new URLSearchParams({
             inicio: inicio.toJSDate().toISOString().split('T')[0],
             fim: fim.toJSDate().toISOString().split('T')[0],
@@ -111,14 +103,11 @@ document.addEventListener('DOMContentLoaded', function () {
             sort_by: currentSort.by,
             order: currentSort.order
         });
-        
         const selectedCategories = tomSelect.items;
         selectedCategories.forEach(catId => params.append('categoria', catId));
-        
         const url = `${apiEndpoint}?${params.toString()}`;
         const exportBtn = document.getElementById('exportBtn');
         if (exportBtn) { exportBtn.href = `/exportar/csv?${params.toString()}`; }
-        
         try {
             const response = await fetch(url);
             const data = await response.json();
@@ -129,7 +118,6 @@ document.addEventListener('DOMContentLoaded', function () {
         finally { if (loadingSpinner) loadingSpinner.style.display = 'none'; }
     }
 
-    // --- INICIALIZAÇÃO E EVENT LISTENERS ---
     tomSelect = new TomSelect('#categoria', { plugins: ['remove_button'], placeholder: 'Todas' });
     const datePicker = new Litepicker({
         element: datePickerInput, singleMode: false, format: 'DD/MM/YYYY', lang: 'pt-BR',
@@ -149,7 +137,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, 500);
     });
-
     btnMesAtual?.addEventListener('click', () => {
         const hoje = new Date();
         datePicker.setDateRange(new Date(hoje.getFullYear(), hoje.getMonth(), 1), new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0));
@@ -160,30 +147,23 @@ document.addEventListener('DOMContentLoaded', function () {
         datePicker.setDateRange(new Date(hoje.getFullYear(), 0, 1), new Date(hoje.getFullYear(), 11, 31));
         atualizarFiltros(1);
     });
-    
-    // --- NOVO LISTENER PARA OS CABEÇALHOS DA TABELA ---
     if (tableHeader) {
         tableHeader.addEventListener('click', (e) => {
             const header = e.target.closest('.sortable-header');
             if (!header) return;
-
             e.preventDefault();
             const sortBy = header.dataset.sortBy;
-
             if (currentSort.by === sortBy) {
                 currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
             } else {
                 currentSort.by = sortBy;
                 currentSort.order = 'desc';
             }
-            
             atualizarFiltros(1);
         });
     }
-
     document.getElementById('prev-page-btn')?.addEventListener('click', (e) => { e.preventDefault(); if (!e.currentTarget.parentElement.classList.contains('disabled')) { atualizarFiltros(parseInt(e.currentTarget.dataset.page)); } });
     document.getElementById('next-page-btn')?.addEventListener('click', (e) => { e.preventDefault(); if (!e.currentTarget.parentElement.classList.contains('disabled')) { atualizarFiltros(parseInt(e.currentTarget.dataset.page)); } });
-
-    // Carga inicial dos dados
+    
     atualizarFiltros(1);
 });

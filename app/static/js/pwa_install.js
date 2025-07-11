@@ -1,6 +1,4 @@
-// Verificação de segurança: só executa o conteúdo deste script UMA VEZ por página.
 if (!window.pwaInstallerLoaded) {
-    // Marca que o script já foi carregado para prevenir re-execução.
     window.pwaInstallerLoaded = true;
 
     let deferredPrompt;
@@ -23,6 +21,7 @@ if (!window.pwaInstallerLoaded) {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
+      sessionStorage.setItem('pwa-installable', 'true');
       showInstallPromotion();
     });
 
@@ -39,7 +38,6 @@ if (!window.pwaInstallerLoaded) {
         deferredPrompt = null;
     };
 
-    // Usamos delegação de eventos para os botões, pois eles podem não existir no momento do carregamento inicial
     document.body.addEventListener('click', function(event) {
         if (event.target.id === 'botao-instalar-pwa' || event.target.closest('#menu-instalar-pwa')) {
             handleInstallClick();
@@ -48,8 +46,8 @@ if (!window.pwaInstallerLoaded) {
 
     window.addEventListener('appinstalled', () => {
       deferredPrompt = null;
+      sessionStorage.removeItem('pwa-installable');
     });
 
-    // Tenta mostrar os botões no carregamento da página, caso o evento já tenha ocorrido
-    showInstallPromotion();
+    document.addEventListener('DOMContentLoaded', showInstallPromotion);
 }

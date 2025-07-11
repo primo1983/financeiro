@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // --- LÓGICA DE PRIVACIDADE DOS CARDS ---
     const toggleButtons = document.querySelectorAll('.toggle-saldo-btn');
     if (toggleButtons.length > 0) {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -31,12 +30,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- LÓGICA CORRIGIDA PARA SUGESTÃO DE PWA ---
-
-    /**
-     * Verifica se o dispositivo do usuário é um telemóvel ou tablet.
-     * @returns {boolean} True se for um dispositivo móvel, senão False.
-     */
     function isMobile() {
         const userAgentCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const touchCheck = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -45,12 +38,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const pwaPromptShown = sessionStorage.getItem('pwaPromptShown');
     const isRunningInBrowser = !window.matchMedia('(display-mode: standalone)').matches;
+    const isInstallable = sessionStorage.getItem('pwa-installable');
     
-    // Só mostra a dica se:
-    // 1. Estiver no navegador
-    // 2. A dica ainda não foi mostrada nesta sessão
-    // 3. FOR UM DISPOSITIVO MÓVEL
-    if (isRunningInBrowser && !pwaPromptShown && isMobile()) {
+    if (isRunningInBrowser && !pwaPromptShown && !isInstallable && isMobile()) {
         const pwaPromptEl = document.getElementById('pwa-prompt');
         if (pwaPromptEl) {
             pwaPromptEl.classList.remove('d-none');
