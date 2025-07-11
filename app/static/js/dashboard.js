@@ -32,20 +32,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // --- LÓGICA CORRIGIDA PARA SUGESTÃO DE PWA ---
-
-    // Esta função verifica se já mostramos a dica nesta sessão do navegador
     const pwaPromptShown = sessionStorage.getItem('pwaPromptShown');
-
-    // Esta função verifica se estamos a correr num navegador (e não na app instalada)
     const isRunningInBrowser = !window.matchMedia('(display-mode: standalone)').matches;
     
-    // Se estivermos no navegador E a dica ainda não foi mostrada nesta sessão...
-    if (isRunningInBrowser && !pwaPromptShown) {
+    // Lê a "pista" que o pwa_install.js pode ter deixado
+    const isInstallable = sessionStorage.getItem('pwa-installable');
+    
+    // Só mostra a dica se:
+    // 1. Estiver no navegador
+    // 2. A dica ainda não foi mostrada nesta sessão
+    // 3. A app NÃO for "instalável" (o que implica que ela JÁ foi instalada)
+    if (isRunningInBrowser && !pwaPromptShown && !isInstallable) {
         const pwaPromptEl = document.getElementById('pwa-prompt');
         if (pwaPromptEl) {
-            // Mostra a dica
             pwaPromptEl.classList.remove('d-none');
-            // E guarda na memória da sessão que já a mostrámos, para não ser irritante.
             sessionStorage.setItem('pwaPromptShown', 'true');
         }
     }
