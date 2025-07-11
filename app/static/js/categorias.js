@@ -1,25 +1,27 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // A função AJAX agora é chamada a partir do nosso script central
+    // Chama a função genérica para os dois formulários desta página
     handleAjaxFormSubmit('addCategoryForm');
     handleAjaxFormSubmit('editCategoryForm');
 
-    // A lógica para preencher o modal de edição continua aqui.
+    // Lógica para preencher o modal de edição
     const editModalEl = document.getElementById('editCategoryModal');
     if (editModalEl) {
         const editModal = new bootstrap.Modal(editModalEl);
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', function () {
-                const id = this.dataset.id;
-                const form = document.getElementById('editCategoryForm');
-                form.action = `/categorias/editar/${id}`;
-                
-                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-                
-                form.querySelector('#edit-id').value = id;
-                form.querySelector('#edit-nome').value = this.dataset.nome;
-                form.querySelector('#edit-tipo').value = this.dataset.tipo;
-                editModal.show();
-            });
+        document.body.addEventListener('click', function(event) {
+            const button = event.target.closest('.edit-btn');
+             // Garante que só afeta os botões da tabela de categorias
+            if (!button || !button.closest('#category-table')) return;
+
+            const id = button.dataset.id;
+            const form = document.getElementById('editCategoryForm');
+            form.action = `/categorias/editar/${id}`;
+            
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            
+            form.querySelector('#edit-id').value = id;
+            form.querySelector('#edit-nome').value = button.dataset.nome;
+            form.querySelector('#edit-tipo').value = button.dataset.tipo;
+            editModal.show();
         });
     }
 });
