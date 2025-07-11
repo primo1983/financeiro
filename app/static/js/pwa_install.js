@@ -17,6 +17,9 @@ if (installButton) {
   installButton.addEventListener('click', async () => {
     // Esconde o nosso botão, pois o prompt será mostrado.
     installButton.style.display = 'none';
+    if (!deferredPrompt) {
+      return;
+    }
     // Mostra o prompt de instalação do navegador.
     deferredPrompt.prompt();
     // Espera o usuário responder ao prompt.

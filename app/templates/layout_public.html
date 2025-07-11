@@ -1,6 +1,21 @@
 {% extends 'base.html' %}
 
-{% block styles %}{{ super() }}{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+    .login-body {
+        background-color: #f0f2f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 1rem;
+    }
+    [data-bs-theme="dark"] .login-body {
+        background-color: #000;
+    }
+</style>
+{% endblock %}
 
 {% block body_content %}
 <body class="login-body">
