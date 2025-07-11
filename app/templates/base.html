@@ -22,8 +22,9 @@
     {% block body_content %}{% endblock %}
     
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/pwa_loader.js') }}" defer></script>
     
     {% block scripts %}{% endblock %}
+    
+    <script src="{{ url_for('static', filename='js/pwa_loader.js') }}" defer></script>
 </body>
 </html>
