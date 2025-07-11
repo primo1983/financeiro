@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% block styles %}{{ super() }}{% endblock %}
+
 {% block body_content %}
 <body class="login-body">
     <main class="container">
@@ -12,4 +14,9 @@
         </div>
     </main>
 </body>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/pwa_install.js') }}" defer></script>
 {% endblock %}
