@@ -25,20 +25,17 @@ def create_app():
         SQLALCHEMY_TRACK_MODIFICATIONS=False
     )
     
-    import locale
-
-    # O locale pode ser configurado uma vez aqui.
+    # --- CORREÇÃO ADICIONADA AQUI ---
+    # Instrui o SQLAlchemy a reciclar conexões a cada 280 segundos.
+    app.config['SQLALCHEMY_POOL_RECYCLE'] = 280
+    
     try:
         locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
     except locale.Error:
         try:
             locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
         except locale.Error:
-            try:
-                locale.setlocale(locale.LC_ALL, 'C.UTF-8')  # Fallback seguro
-                print("⚠️ Locale pt_BR e Portuguese_Brazil indisponíveis. Usando C.UTF-8.")
-            except locale.Error:
-                print("❌ Nenhum locale disponível. A formatação de moeda pode falhar.")
+            print("Atenção: Não foi possível definir o locale para pt_BR. A formatação de moeda pode não funcionar como esperado.")
 
     db.init_app(app)
     csrf.init_app(app)
@@ -60,10 +57,7 @@ def create_app():
         from . import commands
         commands.register_commands(app)
         
-        # --- CORREÇÃO APLICADA AQUI ---
-        # Importamos o nosso módulo de utilitários
         from . import utils
-        # E registamos a função como um filtro para os templates.
         app.jinja_env.filters['currency'] = utils.format_currency
 
     return app
