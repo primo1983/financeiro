@@ -1,6 +1,6 @@
 {
-  "name": "Meu Financeiro",
-  "short_name": "Meu Financeiro",
+  "name": "Minhas Finanças",
+  "short_name": "Minhas Finanças",
   "description": "Sua aplicação pessoal de gestão financeira.",
   "start_url": "/",
   "display": "standalone",
