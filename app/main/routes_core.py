@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, jsonify, request
+from flask import render_template, redirect, url_for, jsonify, request, send_from_directory
 from sqlalchemy.orm.attributes import flag_modified
 from . import main_bp
 from app import db
@@ -41,8 +41,6 @@ def index():
         despesa_mes=resumo_mensal['total_despesas'], 
         saldo_mes=resumo_mensal['saldo'],
         ultimas_10_transacoes=transacoes_ate_hoje[:10],
-        pie_chart_labels=list(resumo_mensal['despesas_por_categoria'].keys()),
-        pie_chart_valores=[float(v) for v in resumo_mensal['despesas_por_categoria'].values()],
         saldos_visibilidade=visibilidade
     )
 
@@ -55,9 +53,6 @@ def toggle_card_visibility():
 
     user = db.session.get(Usuario, current_user.id)
     
-    # --- CORREÇÃO APLICADA AQUI ---
-    # Se o campo de visibilidade não for um dicionário (ex: é None para um usuário antigo),
-    # inicializamos com a estrutura COMPLETA.
     if not isinstance(user.saldos_visibilidade, dict):
         user.saldos_visibilidade = {
             "saldo_atual": True,
@@ -66,7 +61,6 @@ def toggle_card_visibility():
             "saldo_mes": True
         }
 
-    # Agora, com o dicionário garantido, podemos alterar o estado do card específico.
     current_state = user.saldos_visibilidade.get(card_name, True)
     user.saldos_visibilidade[card_name] = not current_state
     
@@ -74,3 +68,10 @@ def toggle_card_visibility():
     db.session.commit()
     
     return jsonify(success=True, card=card_name, newState=(not current_state))
+
+# Rota para servir o Service Worker com o cabeçalho de permissão correto
+@main_bp.route('/sw.js')
+def service_worker():
+    response = send_from_directory('static', 'sw.js')
+    response.headers['Service-Worker-Allowed'] = '/'
+    return response
