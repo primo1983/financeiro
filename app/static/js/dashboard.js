@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // --- LÓGICA DE PRIVACIDADE DOS CARDS (JÁ EXISTENTE) ---
+    // --- LÓGICA DE PRIVACIDADE DOS CARDS (JÁ EXISTENTE E CORRETA) ---
     const toggleButtons = document.querySelectorAll('.toggle-saldo-btn');
     if (toggleButtons.length > 0) {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -31,17 +31,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- NOVA LÓGICA PARA SUGESTÃO DE PWA ---
-    // Verifica se a app NÃO está a rodar em modo standalone (ou seja, está numa aba do navegador)
-    const isInBrowser = !window.matchMedia('(display-mode: standalone)').matches;
+    // --- LÓGICA CORRIGIDA PARA SUGESTÃO DE PWA ---
+
+    // Esta função verifica se já mostramos a dica nesta sessão do navegador
+    const pwaPromptShown = sessionStorage.getItem('pwaPromptShown');
+
+    // Esta função verifica se estamos a correr num navegador (e não na app instalada)
+    const isRunningInBrowser = !window.matchMedia('(display-mode: standalone)').matches;
     
-    // Verifica se a app já foi "instalada" alguma vez (só para ter mais certeza)
-    // E se a mensagem já foi mostrada nesta sessão
-    if (isInBrowser && navigator.standalone !== undefined && !sessionStorage.getItem('pwaPromptShown')) {
-        const pwaPrompt = document.getElementById('pwa-prompt');
-        if (pwaPrompt) {
-            pwaPrompt.classList.remove('d-none');
-            // Marca que a mensagem foi mostrada para não a mostrar novamente se o usuário recarregar a página
+    // Se estivermos no navegador E a dica ainda não foi mostrada nesta sessão...
+    if (isRunningInBrowser && !pwaPromptShown) {
+        const pwaPromptEl = document.getElementById('pwa-prompt');
+        if (pwaPromptEl) {
+            // Mostra a dica
+            pwaPromptEl.classList.remove('d-none');
+            // E guarda na memória da sessão que já a mostrámos, para não ser irritante.
             sessionStorage.setItem('pwaPromptShown', 'true');
         }
     }
