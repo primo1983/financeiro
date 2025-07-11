@@ -12,7 +12,13 @@
                 <div class="modal-header"><h5 class="modal-title" id="modalLabel"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
                 <div class="modal-body">
                     <div class="row"><div class="col-md-6 mb-3">{{ form.tipo.label(class="form-label") }}{{ form.tipo(class="form-select", id="modal_tipo") }}</div><div class="col-md-6 mb-3"><label for="categoria_id" class="form-label">Categoria</label><div class="input-group"><select name="categoria_id" id="categoria_id" class="form-select" required><option value="" selected disabled>Selecione...</option>{% for cat in user_categories %}<option value="{{ cat.id }}" data-tipo-categoria="{{ cat.tipo }}">{{ cat.nome }} ({{ cat.tipo }})</option>{% endfor %}</select><button class="btn btn-outline-secondary" type="button" id="openAddCategoryModalBtn" title="Adicionar Nova Categoria"><i class="bi bi-plus-lg"></i></button></div></div></div>
-                    <div class="row"><div class="col-md-6 mb-3">{{ form.valor.label(class="form-label") }}{{ form.valor(class="form-control", id="valor") }}<div class="mt-2 d-flex flex-wrap gap-1"><button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">5,00</button><button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">10,00</button><button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">15,00</button><button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">20,00</button><button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">50,00</button><button type="button" class="btn btn-sm btn-outline-secondary quick-value-btn">100,00</button></div></div><div class="col-md-6 mb-3">{{ form.data.label(class="form-label") }}{{ form.data(class="form-control", id="data") }}</div></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.valor.label(class="form-label") }}
+                            {{ form.valor(class="form-control", id="valor") }}
+                            </div>
+                        <div class="col-md-6 mb-3">{{ form.data.label(class="form-label") }}{{ form.data(class="form-control", id="data") }}</div>
+                    </div>
                     <div class="row"><div class="col-md-6 mb-3">{{ form.descricao.label(class="form-label") }}{{ form.descricao(class="form-control", id="descricao") }}</div><div class="col-md-6 mb-3">{{ form.forma_pagamento.label(class="form-label") }}{{ form.forma_pagamento(class="form-select", id="forma_pagamento") }}</div></div>
                     <hr>
                     <div class="form-check form-switch mb-2">
