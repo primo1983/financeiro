@@ -24,7 +24,10 @@ def create_app():
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URI'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False
     )
-    
+    print("DATABASE_URI no create_app:", os.environ.get('DATABASE_URI'))
+    print("app.config['SQLALCHEMY_DATABASE_URI']:", app.config['SQLALCHEMY_DATABASE_URI'])
+
+
     # --- CORREÇÃO ADICIONADA AQUI ---
     # Instrui o SQLAlchemy a reciclar conexões a cada 280 segundos.
     app.config['SQLALCHEMY_POOL_RECYCLE'] = 280
@@ -59,5 +62,6 @@ def create_app():
         
         from . import utils
         app.jinja_env.filters['currency'] = utils.format_currency
+        
 
     return app
