@@ -8,11 +8,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const addUrl = form.dataset.addUrl;
     const addCatUrl = form.dataset.addCatUrl;
     const sugerirUrl = form.dataset.sugerirUrl;
-    
+
+    // --- LÓGICA DE CATEGORIAS ---
     function filtrarCategorias(tipoTransacao) {
         const selectCategoria = document.getElementById('categoria_id');
         if (!selectCategoria) return;
-        
         let primeiraOpcaoVisivel = null;
         for (const option of selectCategoria.options) {
             if (!option.value) continue;
@@ -23,12 +23,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 primeiraOpcaoVisivel = option;
             }
         }
-        
         if (selectCategoria.options[selectCategoria.selectedIndex]?.style.display === 'none') {
             selectCategoria.value = primeiraOpcaoVisivel ? primeiraOpcaoVisivel.value : '';
         }
     }
 
+    // --- LÓGICA DO FORMULÁRIO PRINCIPAL ---
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(form);
@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (recorrenciaSwitch) { recorrenciaSwitch.addEventListener('change', function() { document.getElementById('recorrencia-container').style.display = this.checked ? 'block' : 'none'; document.getElementById('recorrencia_switch_hidden_input').value = this.checked ? 'on' : 'off'; }); }
     if (tipoSelect) { tipoSelect.addEventListener('change', () => filtrarCategorias(tipoSelect.value)); }
 
+    // Lógica para ABRIR o modal de ADICIONAR
     document.getElementById('openAddModalBtn')?.addEventListener('click', function(e) {
         e.preventDefault();
         form.reset();
@@ -66,18 +67,14 @@ document.addEventListener('DOMContentLoaded', function () {
         form.action = addUrl;
         if(valorMask) valorMask.unmaskedValue = '';
         document.getElementById('data').value = new Date().toISOString().split('T')[0];
-        
         const tipoPadrao = 'Despesa';
         if(tipoSelect) tipoSelect.value = tipoPadrao;
         filtrarCategorias(tipoPadrao);
-
-        if(recorrenciaSwitch) { 
-            recorrenciaSwitch.checked = false; 
-            recorrenciaSwitch.dispatchEvent(new Event('change')); 
-        }
+        if(recorrenciaSwitch) { recorrenciaSwitch.checked = false; recorrenciaSwitch.dispatchEvent(new Event('change')); }
         modal.show();
     });
 
+    // Lógica para ABRIR o modal de EDITAR
     document.body.addEventListener('click', function(event) {
         const button = event.target.closest('.edit-btn');
         if (!button) return;
@@ -106,19 +103,48 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.show();
     });
 
-    // Lógica do modal de categoria rápida (sem alterações)
+    // --- LÓGICA RESTAURADA PARA O MODAL DE CATEGORIA RÁPIDA ---
     const addCategoryModalEl = document.getElementById('addCategoryModal');
     const openAddCategoryBtn = document.getElementById('openAddCategoryModalBtn');
     if (addCategoryModalEl && openAddCategoryBtn) {
-        // ... (código existente)
-    }
+        const addCategoryModal = new bootstrap.Modal(addCategoryModalEl);
+        openAddCategoryBtn.addEventListener('click', (e) => { 
+            e.stopPropagation(); // Previne que o modal principal feche
+            addCategoryModal.show(); 
+        });
+        
+        const addCategoryForm = document.getElementById('addCategoryForm');
+        addCategoryForm.addEventListener('submit', function(e) { 
+            e.preventDefault();
+            const nomeInput = document.getElementById('quick_cat_nome');
+            const tipoInput = document.getElementById('quick_cat_tipo');
+            
+            // Limpa erros de validação antigos
+            nomeInput.classList.remove('is-invalid');
 
-    // Lógica do lançamento inteligente (sem alterações)
-    let debounceTimeout;
-    const descricaoInput = document.getElementById('descricao');
-    if (descricaoInput) {
-        // ... (código existente)
+            fetch(addCatUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ nome: nomeInput.value, tipo: tipoInput.value })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const selectCategoria = document.getElementById('categoria_id');
+                    const newOption = new Option(`${data.categoria.nome} (${data.categoria.tipo})`, data.categoria.id);
+                    newOption.dataset.tipoCategoria = data.categoria.tipo;
+                    selectCategoria.add(newOption);
+                    selectCategoria.value = data.categoria.id;
+                    addCategoryModal.hide();
+                    this.reset();
+                } else {
+                    // Lógica de validação que agora deve funcionar
+                    for (const fieldName in data.errors) {
+                        const field = addCategoryForm.querySelector(`[name="${fieldName}"]`);
+                        if (field) { field.classList.add('is-invalid'); }
+                    }
+                }
+            });
+        });
     }
-
-    // O BLOCO DE CÓDIGO PARA OS BOTÕES DE VALOR RÁPIDO FOI REMOVIDO
 });
