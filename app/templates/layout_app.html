@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
 
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/litepicker.css') }}">
+<link href="{{ url_for('static', filename='css/tom-select.bootstrap5.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block body_content %}
 <div class="d-flex" id="wrapper">
     <div class="d-flex flex-column flex-shrink-0 border-end" id="sidebar-wrapper">
@@ -14,7 +20,6 @@
             <a href="{{ url_for('main.transacoes_redirect') }}" class="list-group-item list-group-item-action p-3 {% if 'listar_transacoes' in request.endpoint or 'gerenciar_recorrencias' in request.endpoint %}active{% endif %}"><i class="bi bi-arrow-down-up me-2"></i> Transações</a>
             <a href="{{ url_for('main.listar_categorias') }}" class="list-group-item list-group-item-action p-3 {% if 'listar_categorias' in request.endpoint %}active{% endif %}"><i class="bi bi-tags-fill me-2"></i> Categorias</a>
             <a href="{{ url_for('main.analises_redirect') }}" class="list-group-item list-group-item-action p-3 {% if 'analises' in request.endpoint %}active{% endif %}"><i class="bi bi-bar-chart-line-fill me-2"></i> Análises</a>
-            
             {% if current_user.is_admin %}
             <hr class="my-2">
             <h6 class="text-muted fw-bold text-uppercase px-3 mt-2 mb-1 fs-7">Administração</h6>
@@ -26,6 +31,9 @@
                 <i class="bi bi-person-circle fs-4 me-2"></i><strong>Olá, {{ current_user.username }}</strong>
             </a>
             <ul class="dropdown-menu text-small shadow">
+                <li id="menu-instalar-pwa" style="display: none;">
+                    <a class="dropdown-item" href="#"><i class="bi bi-download me-2"></i>Instalar Aplicação</a>
+                </li>
                 <li><a class="dropdown-item" href="{{ url_for('auth.perfil') }}"><i class="bi bi-person-fill-gear me-2"></i> Perfil</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Sair</a></li>
