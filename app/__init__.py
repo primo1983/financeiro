@@ -1,11 +1,15 @@
 import os
 import locale
+import pymysql
+pymysql.install_as_MySQLdb()
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+
+
 
 load_dotenv()
 
