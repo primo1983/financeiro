@@ -19,17 +19,14 @@ def adicionar_categoria():
     if form.validate_on_submit():
         existente = Categoria.query.filter_by(user_id=current_user.id, nome=form.nome.data, tipo=form.tipo.data).first()
         if existente:
-            # Retorna erro em formato JSON para o AJAX
             return jsonify(success=False, errors={'nome': ['Uma categoria com este nome e tipo já existe.']}), 400
         
         nova_cat = Categoria(user_id=current_user.id, nome=form.nome.data, tipo=form.tipo.data)
         db.session.add(nova_cat)
         db.session.commit()
-        flash('Categoria adicionada!', 'success')
+        # A mensagem flash é tratada pelo redirecionamento, não precisa estar aqui para o AJAX
         return jsonify(success=True, redirect_url=url_for('main.listar_categorias'))
     else:
-        # --- CORREÇÃO APLICADA AQUI ---
-        # Se a validação falhar, retorna os erros em formato JSON
         return jsonify(success=False, errors=form.errors), 400
 
 @main_bp.route('/categorias/editar/<int:id>', methods=['POST'])
@@ -48,11 +45,9 @@ def editar_categoria(id):
         cat_a_editar.nome = form.nome.data
         cat_a_editar.tipo = form.tipo.data
         db.session.commit()
-        flash('Categoria atualizada!', 'success')
+        # A mensagem flash é tratada pelo redirecionamento, não precisa estar aqui para o AJAX
         return jsonify(success=True, redirect_url=url_for('main.listar_categorias'))
     else:
-        # --- CORREÇÃO APLICADA AQUI ---
-        # Se a validação falhar, retorna os erros em formato JSON
         return jsonify(success=False, errors=form.errors), 400
 
 @main_bp.route('/categorias/excluir/<int:id>', methods=['POST'])
