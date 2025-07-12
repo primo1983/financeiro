@@ -5,14 +5,14 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="mb-0">Minhas Categorias</h3>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-        <i class="bi bi-plus-circle-fill me-2"></i> Adicionar
+        <i class="bi bi-plus-circle-fill me-2"></i> Adicionar Categoria
     </button>
 </div>
 
 <div class="card shadow-sm">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle" id="category-table">
                 <thead><tr><th>Nome da Categoria</th><th>Tipo</th><th class="text-end">Ações</th></tr></thead>
                 <tbody>
                     {% for categoria in categorias %}
@@ -82,7 +82,7 @@
                         {{ form.tipo(class="form-select", id="edit-tipo") }}
                     </div>
                 </div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary") }}</div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>{{ form.submit(class="btn btn-primary", value="Salvar Alterações") }}</div>
             </form>
         </div>
     </div>
